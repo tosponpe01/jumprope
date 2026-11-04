@@ -1,0 +1,2525 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+</head>
+<body>
+<title>โปรแกรมฝึกกระโดดเชือก</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Chakra+Petch:wght@500;600;700&display=swap">
+<style>
+/* Layout: dark sports app — icon rail (sidebar on desktop, bottom bar on phone), sticky top bar,
+   one "stage" per tool with a progress ring, cards for everything else. Single dark theme by choice. */
+:root {
+  --bg: #0a1020; --card: #111a2e; --card2: #18233c; --line: #24314f; --nav-bg: rgba(10, 16, 32, .88);
+  --fg: #f2f5fb; --muted: #8e9bb7; --dim: #5d6a88;
+  --accent: #ff6b1f; --accent2: #ffb02e; --on-accent: #ffffff;
+  --go: #22e39a; --rest: #4da3ff; --warn: #ffc53d; --bad: #ff4d6a; --violet: #a98bff; --pink: #ff6fae;
+  --bronze: linear-gradient(135deg, #f3b98a, #b8662c); --silver: linear-gradient(135deg, #f4f7fc, #95a3bb); --gold: linear-gradient(135deg, #ffe48f, #f0a10f);
+  --glow1: rgba(255, 107, 31, .16); --glow2: rgba(77, 163, 255, .12);
+  --grad: linear-gradient(135deg, var(--accent2) -20%, var(--accent) 55%, #ff3d3d 130%);
+  --font-display: "Chakra Petch", "IBM Plex Sans Thai", Tahoma, sans-serif;
+  --font-body: "IBM Plex Sans Thai", "Leelawadee UI", Tahoma, sans-serif;
+  --radius: 20px; --nav-w: 236px;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { background: var(--bg); color: var(--fg); }
+body {
+  font-family: var(--font-body); font-size: 16px; line-height: 1.55; margin: 0;
+  background:
+    radial-gradient(900px 520px at 85% -10%, var(--glow1), transparent 65%),
+    radial-gradient(700px 480px at -10% 30%, var(--glow2), transparent 65%),
+    var(--bg);
+  background-attachment: fixed;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--bg); }
+h1, h2, h3 { font-family: var(--font-display); line-height: 1.2; text-wrap: balance; margin: 0; letter-spacing: .01em; }
+h2 { font-size: 1.45rem; }
+h3 { font-size: 1.08rem; }
+p { margin: 0; }
+.muted { color: var(--muted); }
+.num { font-family: var(--font-display); font-variant-numeric: tabular-nums; }
+.eyebrow { font: 600 .72rem var(--font-body); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+svg.i { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+button { font: inherit; color: inherit; }
+input:focus-visible, select:focus-visible, button:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+/* ---------- navigation ---------- */
+.nav {
+  position: fixed; z-index: 20; top: 0; bottom: 0; left: 0; width: var(--nav-w);
+  display: flex; flex-direction: column; gap: 4px;
+  padding: calc(22px + env(safe-area-inset-top, 0px)) 14px 22px max(14px, env(safe-area-inset-left, 0px));
+  background: var(--nav-bg); border-right: 1px solid var(--line); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+}
+.nav-brand { display: flex; align-items: center; gap: 10px; padding: 0 8px 22px; }
+.nav-brand b { font: 700 1.05rem/1.15 var(--font-display); }
+.nav-brand small { display: block; font-size: .74rem; color: var(--muted); }
+.nav-item {
+  display: flex; align-items: center; gap: 12px; padding: 11px 14px; border: 0; border-radius: 14px; position: relative;
+  background: transparent; color: var(--muted); font-weight: 600; font-size: .98rem; cursor: pointer; text-align: left;
+}
+.nav-item:hover { color: var(--fg); background: var(--card); }
+.nav-item[aria-current="page"] { color: var(--fg); background: var(--card2); box-shadow: inset 3px 0 0 var(--accent); }
+.nav-item[aria-current="page"] svg { color: var(--accent); }
+.nav-badge {
+  min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--bad); color: #fff;
+  font: 700 .7rem/18px var(--font-display); text-align: center; margin-left: auto;
+}
+.nav-foot { margin-top: auto; padding: 0 8px; font-size: .74rem; color: var(--dim); }
+
+.shell { margin-left: var(--nav-w); min-height: 100vh; }
+.wrap {
+  max-width: 920px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.topbar {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 15;
+  background: var(--nav-bg); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--line);
+}
+.topbar .wrap { display: flex; align-items: center; gap: 10px; padding-block: 10px; }
+.topbar .logo { display: none; }
+#topTitle { font: 700 1.1rem var(--font-display); margin-right: auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.streak-chip {
+  display: inline-flex; align-items: center; gap: 5px; padding: 5px 11px 5px 8px; border-radius: 999px;
+  background: var(--card2); border: 1px solid var(--line); font: 700 .95rem var(--font-display);
+}
+.streak-chip svg { width: 18px; height: 18px; }
+.streak-chip small { font: 500 .75rem var(--font-body); color: var(--muted); }
+.flame { fill: url(#flameGrad); stroke: none; }
+.avatar-btn { border: 0; background: transparent; padding: 0; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; }
+.avatar-btn .who { display: grid; text-align: left; line-height: 1.15; }
+.avatar-btn .who b { font-size: .85rem; max-width: 120px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.avatar-btn .who small { font-size: .72rem; color: var(--muted); }
+.avatar {
+  --size: 40px; width: var(--size); height: var(--size); border-radius: 50%; flex-shrink: 0; position: relative;
+  display: grid; place-items: center; font: 700 calc(var(--size) * .42) var(--font-display); color: #0a1020; background: var(--av, var(--accent));
+}
+.avatar .dot { position: absolute; right: -1px; bottom: -1px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--bg); background: var(--dim); }
+.avatar .dot.ok { background: var(--go); }
+.avatar .dot.busy { background: var(--rest); }
+.avatar .dot.pending { background: var(--warn); }
+.avatar .dot.err { background: var(--bad); }
+
+main.wrap { padding-block: 22px 56px; }
+.view { display: grid; gap: 18px; }
+.page-head { display: grid; gap: 4px; }
+footer.wrap { color: var(--dim); font-size: .8rem; padding-block: 0 32px; }
+
+/* ---------- building blocks ---------- */
+.card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; min-width: 0; }
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.row-between { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; font-size: .8rem; font-weight: 600; color: var(--muted); background: var(--card2); white-space: nowrap; }
+.pill.up { color: var(--go); background: color-mix(in srgb, var(--go) 14%, transparent); }
+.pill.warn { color: var(--warn); background: color-mix(in srgb, var(--warn) 14%, transparent); }
+.pill.hot { color: var(--on-accent); background: var(--grad); }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  font-weight: 600; font-size: .98rem; border: 0; border-radius: 14px; padding: 11px 18px; cursor: pointer;
+  color: var(--fg); background: var(--card2);
+}
+.btn:hover { filter: brightness(1.12); }
+.btn:disabled { opacity: .4; cursor: not-allowed; filter: none; }
+.btn.primary { background: var(--grad); color: var(--on-accent); box-shadow: 0 10px 24px -12px var(--accent); }
+.btn.go { background: var(--go); color: #03150d; }
+.btn.ghost { background: transparent; border: 1px solid var(--line); }
+.btn.danger { background: transparent; color: var(--bad); border: 1px solid color-mix(in srgb, var(--bad) 55%, transparent); }
+.btn.sm { padding: 7px 12px; font-size: .86rem; border-radius: 11px; }
+.btn.block { width: 100%; }
+
+.seg { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; border-radius: 16px; background: var(--card); border: 1px solid var(--line); max-width: 100%; }
+.seg button {
+  border: 0; background: transparent; color: var(--muted); font-weight: 600; font-size: .93rem;
+  padding: 9px 16px; border-radius: 12px; cursor: pointer; white-space: nowrap;
+}
+.seg button:hover { color: var(--fg); }
+.seg button[aria-pressed="true"] { background: var(--grad); color: var(--on-accent); box-shadow: 0 8px 18px -10px var(--accent); }
+.seg[data-locked="1"] button { cursor: not-allowed; }
+.seg[data-locked="1"] button:not([aria-pressed="true"]) { opacity: .45; }
+.seg.full { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); width: 100%; }
+.seg.full button { white-space: normal; display: grid; gap: 0; }
+.seg.full button small { font-weight: 500; font-size: .76rem; opacity: .85; }
+.seg.soft button[aria-pressed="true"] { background: var(--card2); color: var(--fg); box-shadow: inset 0 0 0 1px var(--line); }
+.seg-row { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; }
+
+.note { font-size: .88rem; color: var(--muted); display: flex; gap: 10px; align-items: flex-start; }
+.note svg { color: var(--warn); width: 18px; height: 18px; margin-top: 2px; }
+.toast {
+  position: fixed; left: 16px; right: 16px; margin: 0 auto; width: fit-content; max-width: 460px; text-align: center;
+  bottom: calc(24px + env(safe-area-inset-bottom, 0px)); z-index: 60;
+  background: var(--fg); color: var(--bg); padding: 10px 18px; border-radius: 14px; font-weight: 600;
+  box-shadow: 0 12px 30px -10px rgba(0, 0, 0, .6);
+}
+details.card summary { cursor: pointer; font: 700 1.02rem var(--font-display); list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+details.card summary::-webkit-details-marker { display: none; }
+details.card summary::after { content: "+"; font: 600 1.3rem var(--font-display); color: var(--muted); }
+details.card[open] summary::after { content: "−"; }
+details.card[open] summary { margin-bottom: 12px; }
+.xpbar { height: 8px; border-radius: 99px; background: var(--card2); overflow: hidden; }
+.xpbar > i { display: block; height: 100%; width: 0; background: var(--grad); border-radius: inherit; transition: width .5s ease; }
+.xpbar.green > i { background: var(--go); }
+.empty { text-align: center; color: var(--muted); padding: 22px 12px; font-size: .92rem; }
+
+/* ---------- forms + account sheet ---------- */
+.field { display: grid; gap: 4px; font-size: .84rem; color: var(--muted); min-width: 0; }
+.field input, .form-grid input, .form-grid select, .field select {
+  width: 100%; font: 500 1rem var(--font-body); color: var(--fg); background: var(--card2);
+  border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px;
+}
+.fields2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: 10px; min-width: 0; }
+fieldset:disabled { opacity: .45; }
+.form-msg { font-size: .88rem; min-height: 1.2em; }
+.form-msg.err { color: var(--bad); }
+.form-msg.ok { color: var(--go); }
+.overlay {
+  position: fixed; inset: 0; z-index: 45; background: rgba(5, 8, 18, .62); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+  display: grid; align-items: end; justify-items: center;
+}
+.sheet {
+  width: min(520px, 100%); max-height: 92vh; overflow-y: auto; background: var(--card); border: 1px solid var(--line);
+  border-radius: 26px 26px 0 0; display: grid; gap: 14px;
+  padding: 18px max(18px, env(safe-area-inset-right, 0px)) calc(22px + env(safe-area-inset-bottom, 0px)) max(18px, env(safe-area-inset-left, 0px));
+}
+.sheet-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.user-list { display: grid; gap: 8px; }
+.user-row { display: flex; align-items: center; gap: 10px; padding: 8px 8px 8px 10px; border-radius: 16px; background: var(--card2); border: 1px solid transparent; }
+.user-row.active { border-color: color-mix(in srgb, var(--accent) 70%, transparent); }
+.user-main { flex: 1; min-width: 0; border: 0; background: transparent; text-align: left; cursor: pointer; display: grid; padding: 4px 0; }
+.user-main b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.user-main small { color: var(--muted); font-size: .78rem; }
+.icon-btn.sm { width: 36px; height: 36px; }
+.link-box { display: flex; gap: 8px; align-items: center; }
+.link-box code { flex: 1; min-width: 0; overflow-x: auto; white-space: nowrap; font-size: .8rem; padding: 8px 10px; border-radius: 10px; background: var(--card2); color: var(--muted); }
+
+/* ---------- celebration ---------- */
+.celebrate { position: fixed; inset: 0; z-index: 55; display: grid; place-items: center; padding: 24px; background: rgba(5, 8, 18, .75); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.celeb-card {
+  position: relative; overflow: hidden; width: min(360px, 100%); text-align: center; padding: 34px 22px 22px;
+  border-radius: 28px; background: var(--card); border: 1px solid var(--line); display: grid; gap: 8px; justify-items: center;
+  animation: pop .5s cubic-bezier(.2, 1.4, .4, 1);
+}
+.celeb-card > * { position: relative; z-index: 1; }
+.celeb-card .rays {
+  position: absolute; z-index: 0; left: 50%; top: 92px; width: 520px; height: 520px; margin: -260px 0 0 -260px;
+  background: repeating-conic-gradient(color-mix(in srgb, var(--accent2) 16%, transparent) 0 9deg, transparent 9deg 18deg);
+  -webkit-mask: radial-gradient(circle, #000 18%, transparent 60%); mask: radial-gradient(circle, #000 18%, transparent 60%);
+  animation: spin 14s linear infinite;
+}
+.celeb-medal { width: 116px; height: 116px; border-radius: 50%; display: grid; place-items: center; background: var(--grad); color: #2a1200; margin-bottom: 6px; box-shadow: 0 0 0 8px rgba(255, 255, 255, .06), 0 18px 50px -12px var(--accent); }
+.celeb-medal svg { width: 54px; height: 54px; }
+.celeb-medal b { font: 700 2.4rem var(--font-display); }
+.celeb-medal[data-tier="1"] { background: var(--bronze); }
+.celeb-medal[data-tier="2"] { background: var(--silver); }
+.celeb-medal[data-tier="3"] { background: var(--gold); }
+.celeb-card h3 { font-size: 1.4rem; }
+@keyframes pop { from { transform: scale(.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---------- home ---------- */
+.hero {
+  position: relative; overflow: hidden; display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; justify-content: space-between;
+  padding: 22px; border-radius: 24px; border: 1px solid var(--line);
+  background: linear-gradient(140deg, color-mix(in srgb, var(--accent) 22%, var(--card)) 0%, var(--card) 60%);
+}
+.hero::after {
+  content: ""; position: absolute; right: -60px; top: -80px; width: 260px; height: 260px; border-radius: 50%;
+  border: 2px dashed color-mix(in srgb, var(--accent) 45%, transparent); pointer-events: none;
+}
+.hero-main { display: grid; gap: 8px; min-width: 0; flex: 1 1 260px; position: relative; z-index: 1; }
+.hero-name { font-size: clamp(1.6rem, 6vw, 2.3rem); overflow-wrap: anywhere; }
+.rank { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: .88rem; color: var(--muted); }
+.hero .xpbar { max-width: 360px; }
+.hero-streak { display: flex; align-items: center; gap: 10px; position: relative; z-index: 1; }
+.hero-streak svg { width: 44px; height: 44px; }
+.hero-streak b { display: block; font: 700 2.2rem/1 var(--font-display); }
+.hero-streak span { font-size: .82rem; color: var(--muted); }
+
+.kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.kpi { display: grid; gap: 2px; align-content: start; }
+.kpi b { font: 700 2rem/1.1 var(--font-display); font-variant-numeric: tabular-nums; }
+.kpi small { color: var(--muted); font-size: .8rem; }
+.kpi.hot b { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+.banner { display: flex; align-items: center; justify-content: space-between; gap: 14px; cursor: pointer; text-align: left; width: 100%; color: var(--fg); }
+.banner.comp { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+.banner h3 { margin-top: 2px; }
+.comp-days { text-align: center; padding: 10px 16px; border-radius: 16px; background: var(--grad); color: var(--on-accent); min-width: 86px; }
+.comp-days b { display: block; font: 700 2rem/1 var(--font-display); }
+.comp-days span { font-size: .78rem; font-weight: 600; }
+.mini-ring { width: 64px; height: 64px; flex-shrink: 0; position: relative; }
+.mini-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.mini-ring circle { fill: none; stroke-width: 8; }
+.mini-ring .bg { stroke: var(--card2); }
+.mini-ring .fg { stroke: var(--go); stroke-linecap: round; stroke-dasharray: 150.8; }
+.mini-ring b { position: absolute; inset: 0; display: grid; place-items: center; font: 700 1rem var(--font-display); }
+
+.quick { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.action {
+  display: grid; gap: 4px; align-content: start; text-align: left; cursor: pointer; padding: 16px;
+  border-radius: var(--radius); border: 1px solid var(--line); background: var(--card); transition: transform .15s, border-color .15s;
+}
+.action:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); }
+.ico { width: 42px; height: 42px; border-radius: 14px; display: grid; place-items: center; flex-shrink: 0; }
+.action .ico { margin-bottom: 6px; }
+.ico.o { background: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--accent); }
+.ico.g { background: color-mix(in srgb, var(--go) 16%, transparent); color: var(--go); }
+.ico.b { background: color-mix(in srgb, var(--rest) 16%, transparent); color: var(--rest); }
+.ico.y { background: color-mix(in srgb, var(--warn) 16%, transparent); color: var(--warn); }
+.ico.v { background: color-mix(in srgb, var(--violet) 18%, transparent); color: var(--violet); }
+.ico.p { background: color-mix(in srgb, var(--pink) 16%, transparent); color: var(--pink); }
+.action b { font: 700 1.05rem var(--font-display); }
+.action small { color: var(--muted); font-size: .82rem; }
+.spark svg { display: block; width: 100%; height: auto; }
+.spark .area { fill: url(#sparkGrad); }
+.spark .line { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+.spark .dot { fill: var(--accent); stroke: var(--bg); stroke-width: 3; }
+.spark .lbl { fill: var(--fg); font: 700 13px var(--font-display); }
+.spark .ax { fill: var(--dim); font: 500 11px var(--font-body); }
+
+/* ---------- missions ---------- */
+.mission-list { display: grid; gap: 10px; }
+.mission { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 14px; border-radius: 18px; background: var(--card); border: 1px solid var(--line); }
+.mission .m-name { font-weight: 600; line-height: 1.35; }
+.mission .m-prog { display: flex; align-items: center; gap: 10px; font-size: .8rem; color: var(--muted); margin-top: 6px; }
+.mission .m-prog .xpbar { flex: 1; height: 6px; }
+.mission .m-xp { font: 700 .82rem var(--font-display); color: var(--accent2); white-space: nowrap; }
+.mission.done { border-color: color-mix(in srgb, var(--go) 55%, var(--line)); background: color-mix(in srgb, var(--go) 6%, var(--card)); }
+.mission.claimed { opacity: .55; }
+.mission .claimed-tag { display: inline-flex; align-items: center; gap: 4px; font-size: .82rem; color: var(--go); font-weight: 600; white-space: nowrap; }
+.mission .claimed-tag svg { width: 16px; height: 16px; }
+
+/* ---------- achievements ---------- */
+.achs { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+.ach { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: center; padding: 14px; border-radius: 18px; background: var(--card2); border: 1px solid transparent; }
+.medal { width: 54px; height: 54px; border-radius: 50%; display: grid; place-items: center; background: var(--card); color: var(--dim); border: 2px dashed var(--line); }
+.medal svg { width: 26px; height: 26px; }
+.ach[data-tier="1"] .medal, .medal[data-tier="1"] { background: var(--bronze); color: #2c1403; border: 0; }
+.ach[data-tier="2"] .medal, .medal[data-tier="2"] { background: var(--silver); color: #182134; border: 0; }
+.ach[data-tier="3"] .medal, .medal[data-tier="3"] { background: var(--gold); color: #2a1a00; border: 0; box-shadow: 0 0 22px -6px #ffc53d; }
+.ach b { font: 700 .98rem var(--font-display); }
+.ach .a-desc { font-size: .8rem; color: var(--muted); }
+.ach .a-prog { display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: .76rem; color: var(--muted); }
+.ach .a-prog .xpbar { flex: 1; height: 5px; }
+.pips { display: inline-flex; gap: 3px; }
+.pips i { width: 12px; height: 4px; border-radius: 2px; background: var(--line); }
+.pips i.t1 { background: #d08a4f; } .pips i.t2 { background: #c3cee0; } .pips i.t3 { background: #ffc53d; }
+
+/* ---------- plan ---------- */
+.weeks { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.week { display: flex; flex-direction: column; gap: 8px; position: relative; }
+.week .btn { margin-top: auto; }
+.week.current { border-color: color-mix(in srgb, var(--accent) 60%, var(--line)); }
+.week .wk { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 11px; background: var(--card2); font: 700 1rem var(--font-display); }
+.week.current .wk { background: var(--grad); color: var(--on-accent); }
+.week .formula { font: 700 1.7rem var(--font-display); font-variant-numeric: tabular-nums; }
+.week .formula span { font: 500 .9rem var(--font-body); color: var(--muted); }
+.week ul { margin: 0; padding-left: 18px; color: var(--muted); font-size: .9rem; }
+.routine { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.routine ol, .routine ul { margin: 8px 0 0; padding-left: 20px; font-size: .92rem; color: var(--muted); display: grid; gap: 3px; }
+.routine h3 { display: flex; align-items: center; gap: 8px; }
+.routine h3 svg { width: 20px; height: 20px; color: var(--accent); }
+.moves { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+.move { display: grid; gap: 6px; align-content: start; }
+.move-head { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+.bars { display: inline-flex; gap: 3px; align-items: flex-end; }
+.bars i { width: 5px; border-radius: 2px; background: var(--line); }
+.bars i:nth-child(1) { height: 6px; } .bars i:nth-child(2) { height: 9px; } .bars i:nth-child(3) { height: 12px; } .bars i:nth-child(4) { height: 15px; } .bars i:nth-child(5) { height: 18px; }
+.bars i.on { background: var(--accent); }
+.move .en { font-size: .78rem; color: var(--dim); }
+.move p { font-size: .9rem; color: var(--muted); }
+
+/* ---------- stage + ring ---------- */
+.stage {
+  --ring: var(--accent);
+  display: grid; justify-items: center; gap: 12px; text-align: center; padding: 22px 16px;
+  border-radius: 26px; border: 1px solid var(--line);
+  background: radial-gradient(420px 300px at 50% 0%, color-mix(in srgb, var(--ring) 14%, transparent), transparent 70%), var(--card);
+}
+.stage[data-phase="work"], .stage[data-phase="done"] { --ring: var(--go); }
+.stage[data-phase="rest"] { --ring: var(--rest); }
+.stage[data-phase="ready"], .stage[data-phase="intro"], .stage[data-phase="calib"], .stage[data-phase="camera"], .stage[data-phase="needplay"] { --ring: var(--warn); }
+.phase-pill {
+  display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px; font-weight: 700; font-size: .92rem;
+  color: var(--ring); background: color-mix(in srgb, currentColor 14%, transparent); border: 1px solid color-mix(in srgb, currentColor 35%, transparent);
+}
+.phase-pill::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.ring-wrap { position: relative; width: min(66vw, 250px); aspect-ratio: 1; max-width: 100%; }
+.ring { width: 100%; height: 100%; transform: rotate(-90deg); display: block; }
+.ring-bg { fill: none; stroke: var(--card2); stroke-width: 11; }
+.ring-fg { fill: none; stroke: var(--ring); stroke-width: 11; stroke-linecap: round; stroke-dasharray: 552.92; stroke-dashoffset: 0; transition: stroke-dashoffset .12s linear, stroke .3s; }
+.ring-center { position: absolute; inset: 0; display: grid; place-content: center; gap: 4px; }
+.ring-big { font: 700 clamp(3rem, 15vw, 4.4rem)/1 var(--font-display); font-variant-numeric: tabular-nums; }
+.ring-sub { font-size: .85rem; color: var(--muted); font-weight: 600; }
+.move-now { font: 700 1.35rem var(--font-display); }
+.tip { max-width: 520px; font-size: .92rem; }
+.mini-stats { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 22px; color: var(--muted); font-size: .9rem; }
+.mini-stats b { color: var(--fg); font-family: var(--font-display); font-variant-numeric: tabular-nums; }
+.controls { display: flex; align-items: center; justify-content: center; gap: 18px; }
+.play-btn {
+  width: 76px; height: 76px; border-radius: 50%; border: 0; cursor: pointer; display: grid; place-items: center;
+  background: var(--grad); color: var(--on-accent); box-shadow: 0 14px 30px -12px var(--accent);
+}
+.play-btn svg { width: 30px; height: 30px; fill: currentColor; stroke: none; }
+.play-btn:disabled { opacity: .4; cursor: not-allowed; box-shadow: none; }
+.icon-btn {
+  width: 52px; height: 52px; border-radius: 50%; border: 1px solid var(--line); background: var(--card2); cursor: pointer;
+  display: grid; place-items: center; color: var(--fg); flex-shrink: 0;
+}
+.icon-btn.danger { color: var(--bad); }
+.icon-btn:disabled { opacity: .35; cursor: not-allowed; }
+.time-line { display: flex; align-items: baseline; gap: 10px; color: var(--muted); font-weight: 600; }
+.time-line b { font: 700 2rem var(--font-display); color: var(--fg); font-variant-numeric: tabular-nums; }
+.vol { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 10px; color: var(--muted); font-size: .85rem; }
+.vol input { accent-color: var(--accent); width: min(180px, 50vw); }
+
+.tap {
+  width: 100%; min-height: 128px; border-radius: 22px; cursor: pointer; padding: 14px;
+  border: 2px dashed color-mix(in srgb, var(--accent) 70%, transparent); background: color-mix(in srgb, var(--accent) 7%, transparent);
+  color: var(--fg); font-weight: 600; font-size: 1.02rem;
+  display: grid; place-items: center; gap: 4px; touch-action: manipulation; user-select: none; -webkit-user-select: none;
+  transition: transform .06s, background-color .06s;
+}
+.tap .num { font-size: 2.6rem; font-weight: 700; color: var(--accent); line-height: 1; }
+.tap:active:not(:disabled) { transform: scale(.985); background: color-mix(in srgb, var(--accent) 18%, transparent); }
+.tap:disabled { opacity: .35; cursor: not-allowed; }
+
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+.form-grid label { display: grid; gap: 4px; font-size: .82rem; color: var(--muted); }
+.switch { display: inline-flex; align-items: center; gap: 8px; font-size: .92rem; cursor: pointer; }
+.switch input { width: 18px; height: 18px; accent-color: var(--accent); }
+
+.camera { position: relative; width: 100%; max-width: 560px; aspect-ratio: 4 / 3; border-radius: 18px; overflow: hidden; background: #000; }
+.camera canvas { width: 100%; height: 100%; display: block; object-fit: contain; }
+.camera video { display: none; }
+.result { display: grid; gap: 12px; border-color: color-mix(in srgb, var(--go) 60%, var(--line)); }
+.result input[type=number] {
+  width: 130px; font: 700 1.5rem var(--font-display); color: var(--fg); background: var(--card2); border: 1px solid var(--line); border-radius: 12px; padding: 6px 12px;
+}
+.net { font: 700 2.2rem var(--font-display); background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.rules ul { margin: 0; padding-left: 20px; display: grid; gap: 4px; font-size: .93rem; color: var(--muted); }
+.rules ul.cues { display: flex; flex-wrap: wrap; gap: 6px; padding-left: 0; list-style: none; margin-top: 6px; }
+.cues li { font: 600 .8rem var(--font-display); padding: 4px 10px; border-radius: 8px; background: var(--card2); color: var(--fg); }
+.cues li.beep { background: var(--grad); color: var(--on-accent); }
+
+/* ---------- rhythm ---------- */
+.feet { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; width: min(100%, 340px); }
+.foot {
+  aspect-ratio: 1; border-radius: 50%; border: 3px solid var(--line); background: var(--card2);
+  display: grid; place-content: center; text-align: center; gap: 0;
+  transition: transform .07s ease-out, background-color .07s, border-color .07s, box-shadow .07s;
+}
+.foot .num { font-size: clamp(2.4rem, 11vw, 3.4rem); font-weight: 700; line-height: 1; }
+.foot small { color: var(--muted); font-weight: 600; }
+.foot.on { transform: scale(1.06); }
+.foot.left.on { background: var(--rest); border-color: var(--rest); color: #03111f; box-shadow: 0 0 34px -4px var(--rest); }
+.foot.right.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); box-shadow: 0 0 34px -4px var(--accent); }
+.foot.on small { color: inherit; }
+.lv-now { display: flex; align-items: center; justify-content: center; gap: 18px; }
+.lv-now .big-lv { font: 700 2.6rem/1 var(--font-display); }
+.lv-now .bpm { font: 700 1.05rem var(--font-display); color: var(--accent); }
+.lv-scale { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.lv-scale button { border: 1px solid var(--line); background: var(--card); border-radius: 14px; padding: 9px 2px; cursor: pointer; display: grid; gap: 0; }
+.lv-scale button b { font: 700 1rem var(--font-display); }
+.lv-scale button small { color: var(--muted); font-size: .72rem; font-variant-numeric: tabular-nums; }
+.lv-scale button:hover { border-color: color-mix(in srgb, var(--accent) 50%, var(--line)); }
+.lv-scale button[aria-pressed="true"] { background: var(--grad); border-color: transparent; color: var(--on-accent); }
+.lv-scale button[aria-pressed="true"] small { color: inherit; }
+
+/* ---------- me / stats ---------- */
+.profile { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
+.profile .avatar { --size: 72px; }
+.profile-main { flex: 1 1 220px; min-width: 0; display: grid; gap: 6px; }
+.profile-main h2 { overflow-wrap: anywhere; }
+.tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.tile { display: grid; gap: 2px; align-content: start; }
+.tile .val { font: 700 2rem/1.1 var(--font-display); font-variant-numeric: tabular-nums; }
+.tile .val small { font: 500 .85rem var(--font-body); color: var(--muted); }
+.tile .sub { font-size: .8rem; color: var(--muted); }
+.chart-wrap { overflow-x: auto; }
+.chart-wrap svg { display: block; width: 100%; min-width: 420px; height: auto; }
+.chart-wrap .axis { fill: var(--dim); font: 500 12px var(--font-body); }
+.chart-wrap .grid { stroke: var(--line); stroke-dasharray: 3 4; }
+.chart-wrap .barr { fill: url(#barGrad); }
+.chart-wrap .barr.best { fill: var(--go); }
+.chart-wrap .lbl { fill: var(--fg); font: 700 12px var(--font-display); }
+.table-wrap { overflow-x: auto; padding: 6px 8px; }
+table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+th, td { text-align: left; padding: 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+th { color: var(--muted); font-weight: 600; font-size: .76rem; letter-spacing: .04em; }
+td.n { font-family: var(--font-display); font-variant-numeric: tabular-nums; font-weight: 700; }
+.confirm { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 12px; border-radius: 14px; border: 1px solid var(--bad); }
+
+/* ---------- phone ---------- */
+@media (max-width: 899px) {
+  .shell { margin-left: 0; padding-bottom: calc(78px + env(safe-area-inset-bottom, 0px)); }
+  .nav {
+    top: auto; right: 0; width: auto; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 2px;
+    padding: 6px max(6px, env(safe-area-inset-right, 0px)) calc(6px + env(safe-area-inset-bottom, 0px)) max(6px, env(safe-area-inset-left, 0px));
+    border-right: 0; border-top: 1px solid var(--line);
+  }
+  .nav-brand, .nav-foot { display: none; }
+  .nav-item { flex-direction: column; gap: 3px; padding: 6px 2px; font-size: .68rem; text-align: center; justify-content: center; }
+  .nav-item[aria-current="page"] { background: transparent; box-shadow: none; color: var(--accent); }
+  .nav-item[aria-current="page"] svg { background: color-mix(in srgb, var(--accent) 16%, transparent); border-radius: 10px; padding: 3px 10px; width: 44px; height: 28px; }
+  .nav-item svg { width: 24px; height: 24px; padding: 2px 0; }
+  .nav-badge { position: absolute; top: 2px; left: calc(50% + 6px); margin: 0; }
+  .topbar .logo { display: block; }
+  .avatar-btn .who { display: none; }
+  .toast { bottom: calc(90px + env(safe-area-inset-bottom, 0px)); }
+  .kpis { gap: 8px; }
+  .kpi { padding: 14px 10px; }
+  .kpi b { font-size: 1.6rem; }
+  .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 900px) {
+  .overlay { align-items: center; }
+  .sheet { border-radius: 26px; }
+}
+@media (max-width: 420px) {
+  .quick { gap: 10px; }
+  .action { padding: 14px; }
+  .kpi .eyebrow { font-size: .62rem; letter-spacing: .06em; }
+  .mission { grid-template-columns: auto minmax(0, 1fr); }
+  .mission > :last-child { grid-column: 1 / -1; }
+  .mission > :last-child .btn { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .foot, .ring-fg, .action, .tap, .xpbar > i { transition: none; }
+  .celeb-card, .celeb-card .rays { animation: none; }
+}
+</style>
+
+<!-- gradients used by icons and charts -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="flameGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--accent2)"/><stop offset="1" style="stop-color:var(--accent)"/></linearGradient>
+    <linearGradient id="sparkGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--accent);stop-opacity:.35"/><stop offset="1" style="stop-color:var(--accent);stop-opacity:0"/></linearGradient>
+    <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--accent2)"/><stop offset="1" style="stop-color:var(--accent);stop-opacity:.75"/></linearGradient>
+  </defs>
+</svg>
+
+<nav class="nav" aria-label="เมนูหลัก">
+  <div class="nav-brand">
+    <svg width="34" height="34" viewBox="0 0 38 38" aria-hidden="true"><path d="M8 30 C 8 4, 30 4, 30 30" fill="none" stroke="var(--accent)" stroke-width="2.6" stroke-linecap="round"/><rect x="4.5" y="27" width="7" height="9" rx="2.5" fill="var(--fg)"/><rect x="26.5" y="27" width="7" height="9" rx="2.5" fill="var(--fg)"/></svg>
+    <div><b>Jump Rope</b><small>โปรแกรมฝึกกระโดดเชือก</small></div>
+  </div>
+  <button class="nav-item" data-view="home"><svg class="i" viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span>หน้าแรก</span></button>
+  <button class="nav-item" data-view="plan"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span>แผนฝึก</span></button>
+  <button class="nav-item" data-view="workout"><svg class="i" viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg><span>ฝึก</span></button>
+  <button class="nav-item" data-view="test"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6M19 6l1.5-1.5"/></svg><span>ทดสอบ</span></button>
+  <button class="nav-item" data-view="missions"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/></svg><span>ภารกิจ</span><span id="navBadge" class="nav-badge" hidden>0</span></button>
+  <button class="nav-item" data-view="me"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span>ฉัน</span></button>
+  <p class="nav-foot">กติกาอ้างอิงการแข่งขันกระโดดเชือกชิงถ้วยพระราชทาน ครั้งที่ 17 ปี 2569</p>
+</nav>
+
+<div class="shell">
+  <header class="topbar">
+    <div class="wrap">
+      <svg class="logo" width="28" height="28" viewBox="0 0 38 38" aria-hidden="true"><path d="M8 30 C 8 4, 30 4, 30 30" fill="none" stroke="var(--accent)" stroke-width="2.8" stroke-linecap="round"/><rect x="4.5" y="27" width="7" height="9" rx="2.5" fill="var(--fg)"/><rect x="26.5" y="27" width="7" height="9" rx="2.5" fill="var(--fg)"/></svg>
+      <span id="topTitle">หน้าแรก</span>
+      <span class="streak-chip" title="ฝึกต่อเนื่อง (วัน)"><svg viewBox="0 0 24 24"><path class="flame" d="M12 2c.6 3.2 4.8 5.6 4.8 10.4A4.8 4.8 0 0 1 12 17.2a4.8 4.8 0 0 1-4.8-4.8c0-2.2 1.1-3.6 2.2-4.6.1 1.8.9 3 2 3.2C11 8.4 10.9 5 12 2z"/></svg><b id="topStreak">0</b><small>วัน</small></span>
+      <button id="acctBtn" class="avatar-btn" aria-label="ผู้ฝึก สลับหรือเข้าสู่ระบบ"></button>
+    </div>
+  </header>
+
+  <main class="wrap">
+
+    <!-- ===================== หน้าแรก ===================== -->
+    <section id="view-home" class="view" hidden>
+      <div class="hero">
+        <div class="hero-main">
+          <span class="eyebrow" id="hHello">สวัสดี พร้อมฝึกหรือยัง</span>
+          <h1 id="hName" class="hero-name">นักกระโดด</h1>
+          <div id="hRankWrap">
+            <div class="rank"><span class="pill hot" id="hLevel">Lv.1</span><span id="hRank">มือใหม่หัดกระโดด</span><span id="hXp" class="num"></span></div>
+            <div class="xpbar" style="margin-top:8px"><i id="hXpBar"></i></div>
+          </div>
+          <div id="hWelcome" class="row" hidden>
+            <p class="muted" style="width:100%">เข้าสู่ระบบด้วยบัญชีโรงเรียนเพื่อให้ครูเห็นผล หรือเริ่มใช้ในเครื่องนี้ได้เลย</p>
+            <button class="btn primary" data-acct="login">เข้าสู่ระบบโรงเรียน</button>
+            <button class="btn ghost" data-acct="local">ใช้ในเครื่องนี้</button>
+          </div>
+        </div>
+        <div class="hero-streak">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path class="flame" d="M12 2c.6 3.2 4.8 5.6 4.8 10.4A4.8 4.8 0 0 1 12 17.2a4.8 4.8 0 0 1-4.8-4.8c0-2.2 1.1-3.6 2.2-4.6.1 1.8.9 3 2 3.2C11 8.4 10.9 5 12 2z"/></svg>
+          <div><b id="hStreak">0</b><span>วันติดต่อกัน</span></div>
+        </div>
+      </div>
+
+      <div class="kpis">
+        <div class="card kpi"><span class="eyebrow">ฝึกวันนี้</span><b id="hToday">0</b><small>ครั้ง</small></div>
+        <div class="card kpi hot"><span class="eyebrow">SRSS ดีที่สุด</span><b id="hBest30">—</b><small>ครั้ง / 30 วิ</small></div>
+        <div class="card kpi hot"><span class="eyebrow">SRSE ดีที่สุด</span><b id="hBest180">—</b><small>ครั้ง / 3 นาที</small></div>
+      </div>
+
+      <button id="hMissions" class="card banner" data-go="missions">
+        <div>
+          <span class="eyebrow">ภารกิจวันนี้</span>
+          <h3 id="hMisTitle">ทำภารกิจให้ครบรับ XP</h3>
+          <p id="hMisSub" class="muted" style="font-size:.88rem"></p>
+        </div>
+        <div class="mini-ring"><svg viewBox="0 0 60 60"><circle class="bg" cx="30" cy="30" r="24"/><circle id="hMisRing" class="fg" cx="30" cy="30" r="24"/></svg><b id="hMisCount">0/3</b></div>
+      </button>
+
+      <div id="hComp" class="card banner comp" hidden>
+        <div>
+          <span class="eyebrow">นับถอยหลังวันแข่ง</span>
+          <h3 id="hCompName"></h3>
+          <p id="hCompMeta" class="muted" style="font-size:.88rem"></p>
+        </div>
+        <div class="comp-days"><b id="hCompDays">0</b><span id="hCompUnit">วัน</span></div>
+      </div>
+
+      <h2 style="margin-top:6px">เริ่มฝึกเลย</h2>
+      <div class="quick" id="quick">
+        <button class="action" data-go="workout">
+          <span class="ico o"><svg class="i" viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg></span>
+          <span class="eyebrow">ฝึกตามแผน</span><b id="qPlan">ระดับเริ่มต้น สัปดาห์ที่ 1</b><small id="qPlanSub"></small>
+        </button>
+        <button class="action" data-go="test" data-dur="30">
+          <span class="ico g"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg></span>
+          <span class="eyebrow">ทดสอบ</span><b>SRSS 30 วินาที</b><small>เสียงสัญญาณแข่งจริง</small>
+        </button>
+        <button class="action" data-go="test" data-dur="180">
+          <span class="ico b"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg></span>
+          <span class="eyebrow">ทดสอบ</span><b>SRSE 3 นาที</b><small>ความทนทาน</small>
+        </button>
+        <button class="action" data-go="rhythm">
+          <span class="ico y"><svg class="i" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></span>
+          <span class="eyebrow">ฝึกตามจังหวะ</span><b id="qRhythm">Lv.1 • 100 BPM</b><small>ซ้าย-ขวา 1 2 1 2</small>
+        </button>
+      </div>
+
+      <div class="card" style="display:grid; gap:10px">
+        <div class="row-between"><h3>พัฒนาการ SRSS 30 วินาที</h3><span id="hTrend" class="pill" hidden></span></div>
+        <div id="hSpark" class="spark"></div>
+      </div>
+    </section>
+
+    <!-- ===================== แผนฝึก ===================== -->
+    <section id="view-plan" class="view" hidden>
+      <div class="page-head">
+        <h2>แผนฝึก 4 สัปดาห์</h2>
+        <p class="muted">ฝึกสัปดาห์ละ 3 วัน (เช่น จันทร์ พุธ ศุกร์) เริ่มด้วยอบอุ่นร่างกายและจบด้วยยืดเหยียดทุกครั้ง</p>
+      </div>
+      <div id="levelSeg" class="seg full"></div>
+      <p id="planInfo" class="muted" style="font-size:.92rem"></p>
+      <div id="weekCards" class="weeks"></div>
+
+      <div class="routine">
+        <div class="card">
+          <h3><svg class="i" viewBox="0 0 24 24"><path d="M12 2c.6 3.2 4.8 5.6 4.8 10.4a4.8 4.8 0 0 1-9.6 0c0-2.2 1.1-3.6 2.2-4.6.1 1.8.9 3 2 3.2C11 8.4 10.9 5 12 2z"/></svg>อบอุ่นร่างกาย 3 นาที</h3>
+          <ol>
+            <li>หมุนข้อเท้า ข้อมือ หัวไหล่ ข้างละ 10 รอบ</li>
+            <li>ย่ำเท้าอยู่กับที่ 30 วินาที</li>
+            <li>กระโดดเบา ๆ ไม่ใช้เชือก 30 วินาที</li>
+            <li>หมุนเชือกข้างลำตัว ซ้าย-ขวา 30 วินาที</li>
+          </ol>
+        </div>
+        <div class="card">
+          <h3><svg class="i" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-8-8M20 4v5h-5"/></svg>คลายกล้ามเนื้อ 3–5 นาที</h3>
+          <ol>
+            <li>ยืดน่องข้างละ 20 วินาที</li>
+            <li>ยืดต้นขาด้านหน้าและด้านหลัง ข้างละ 20 วินาที</li>
+            <li>ยืดหัวไหล่และแขน ข้างละ 15 วินาที</li>
+            <li>ดื่มน้ำ หายใจช้า ๆ ให้ชีพจรลดลง</li>
+          </ol>
+        </div>
+        <div class="card">
+          <h3><svg class="i" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>ความปลอดภัย</h3>
+          <ul>
+            <li>ใส่ถุงเท้าและรองเท้ากีฬา ฝึกบนพื้นเรียบไม่ลื่น</li>
+            <li>ความยาวเชือก: เหยียบกลางเชือก ด้ามจับสูงถึงรักแร้</li>
+            <li>เว้นระยะรอบตัวอย่างน้อย 2 เมตร (สนามแข่งสปีด 5 × 5 เมตร)</li>
+            <li>เจ็บหน้าอก เวียนศีรษะ หายใจไม่ทัน ให้หยุดทันทีแล้วบอกครูหรือผู้ปกครอง</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="page-head" style="margin-top:6px">
+        <h2>ท่ากระโดด</h2>
+        <p class="muted">แท่งสีส้มบอกความยาก ฝึกท่าง่ายให้คล่องก่อนค่อยเพิ่มท่าถัดไป</p>
+      </div>
+      <div id="moveCards" class="moves"></div>
+    </section>
+
+    <!-- ===================== ฝึกตามโปรแกรม ===================== -->
+    <section id="view-workout" class="view" hidden>
+      <div class="seg" data-switch><button data-v="workout">ตามโปรแกรม</button><button data-v="rhythm">ตามจังหวะ</button></div>
+      <div class="page-head">
+        <h2 id="woTitle">ฝึกตามโปรแกรม</h2>
+        <p id="woSub" class="muted"></p>
+      </div>
+
+      <div id="woStage" class="stage" data-phase="idle">
+        <span id="woPhase" class="phase-pill">พร้อมเริ่ม</span>
+        <div class="ring-wrap">
+          <svg class="ring" viewBox="0 0 200 200" aria-hidden="true"><circle class="ring-bg" cx="100" cy="100" r="88"/><circle id="woRing" class="ring-fg" cx="100" cy="100" r="88"/></svg>
+          <div class="ring-center"><div id="woTime" class="ring-big">0:00</div><div id="woRound" class="ring-sub">รอบ 0/0</div></div>
+        </div>
+        <div id="woMove" class="move-now">—</div>
+        <p id="woTip" class="muted tip"></p>
+        <div class="mini-stats"><span>ถัดไป <b id="woNext">—</b></span><span>เวลารวม <b id="woElapsed">0:00</b></span></div>
+        <div class="controls">
+          <button id="woStop" class="icon-btn danger" disabled aria-label="จบการฝึก" title="จบการฝึก"><svg class="i" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></button>
+          <button id="woMain" class="play-btn" aria-label="เริ่มฝึก" title="เริ่มฝึก"></button>
+          <button id="woSkip" class="icon-btn" disabled aria-label="ข้ามช่วงนี้" title="ข้ามช่วงนี้"><svg class="i" viewBox="0 0 24 24"><path d="M5 5l9 7-9 7zM18 5v14"/></svg></button>
+        </div>
+      </div>
+
+      <button id="woTap" class="tap" disabled>
+        <span class="num" id="woTapCount">0</span>
+        <span>แตะเพื่อนับจำนวนครั้ง (หรือกด Space) ให้เพื่อนช่วยแตะก็ได้</span>
+      </button>
+
+      <details class="card">
+        <summary>ตั้งค่าการฝึกเอง</summary>
+        <div class="form-grid">
+          <label>รอบ<input id="cRounds" type="number" min="1" max="40" value="8"></label>
+          <label>ฝึก (วินาที)<input id="cWork" type="number" min="5" max="600" value="30"></label>
+          <label>พัก (วินาที)<input id="cRest" type="number" min="0" max="300" value="30"></label>
+          <label>ท่า<select id="cMove"></select></label>
+          <label>เสียงจังหวะ ซ้าย-ขวา<select id="cBeat">
+            <option value="0">ปิด</option>
+            <option value="100">100 BPM</option>
+            <option value="120">120 BPM</option>
+            <option value="140">140 BPM</option>
+            <option value="160">160 BPM</option>
+            <option value="180">180 BPM</option>
+            <option value="200">200 BPM</option>
+          </select></label>
+        </div>
+        <div class="row-between" style="margin-top:14px">
+          <label class="switch"><input id="cVoice" type="checkbox" checked> เสียงพูดบอกท่า</label>
+          <button id="cApply" class="btn primary">ใช้ค่าที่ตั้งเอง</button>
+        </div>
+      </details>
+    </section>
+
+    <!-- ===================== ฝึกตามจังหวะ ===================== -->
+    <section id="view-rhythm" class="view" hidden>
+      <div class="seg" data-switch><button data-v="workout">ตามโปรแกรม</button><button data-v="rhythm">ตามจังหวะ</button></div>
+      <div class="page-head">
+        <h2>ฝึกตามจังหวะ</h2>
+        <p class="muted">เสียง 2 จังหวะ ซ้าย-ขวา 1 2 1 2 ให้เท้าแตะพื้นพอดีกับเสียง เปลี่ยนระดับระหว่างฝึกได้ ฝึกจนกว่าจะกดหยุด</p>
+      </div>
+
+      <div class="stage" data-phase="idle">
+        <div class="feet" aria-hidden="true">
+          <div id="footL" class="foot left"><span class="num">1</span><small>ซ้าย</small></div>
+          <div id="footR" class="foot right"><span class="num">2</span><small>ขวา</small></div>
+        </div>
+        <div class="lv-now">
+          <button id="rDown" class="icon-btn" aria-label="ลดระดับ"><svg class="i" viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button>
+          <div><div id="rLvBig" class="big-lv">Lv.1</div><div id="rBpmBig" class="bpm">100 BPM</div></div>
+          <button id="rUp" class="icon-btn" aria-label="เพิ่มระดับ"><svg class="i" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></svg></button>
+        </div>
+        <p id="rEquiv" class="muted tip"></p>
+        <div class="mini-stats"><span>เวลา <b id="rTime">0:00</b></span><span>จังหวะ <b id="rBeats">0</b></span></div>
+        <div class="controls"><button id="rMain" class="play-btn" aria-label="เริ่ม" title="เริ่ม"></button></div>
+        <p id="rStatus" class="muted" style="font-size:.9rem">เลือกระดับแล้วกดเริ่ม</p>
+      </div>
+
+      <div id="rLevels" class="lv-scale"></div>
+      <p class="note"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16v.01"/></svg><span>ปุ่มลูกศรขึ้น-ลงบนคีย์บอร์ดใช้เปลี่ยนระดับได้ ระบบจำระดับล่าสุดไว้ให้ครั้งหน้า</span></p>
+    </section>
+
+    <!-- ===================== ทดสอบนับครั้ง ===================== -->
+    <section id="view-test" class="view" hidden>
+      <div class="page-head">
+        <h2>ทดสอบแบบสนามแข่ง</h2>
+        <p class="muted">ใช้เสียงสัญญาณเดียวกับการแข่งขัน เริ่มเมื่อได้ยิน Beep แรก หยุดเมื่อได้ยิน Beep สุดท้าย ระบบนับเฉพาะช่วงระหว่างสัญญาณ</p>
+      </div>
+
+      <div class="seg-row">
+        <div id="tDur" class="seg" role="group" aria-label="รายการ">
+          <button data-v="30">SRSS 30 วิ</button>
+          <button data-v="180">SRSE 3 นาที</button>
+        </div>
+        <div id="tMethod" class="seg" role="group" aria-label="วิธีนับ">
+          <button data-v="tap">แตะนับ</button>
+          <button data-v="cam">กล้องนับเท้าขวา</button>
+        </div>
+      </div>
+
+      <div id="tStage" class="stage" data-phase="idle">
+        <span id="tStatus" class="phase-pill">กดปุ่มเพื่อเริ่มทดสอบ</span>
+        <div class="ring-wrap">
+          <svg class="ring" viewBox="0 0 200 200" aria-hidden="true"><circle class="ring-bg" cx="100" cy="100" r="88"/><circle id="tRing" class="ring-fg" cx="100" cy="100" r="88"/></svg>
+          <div class="ring-center"><div id="tCount" class="ring-big">0</div><div class="ring-sub">ครั้ง (เท้าขวา)</div></div>
+        </div>
+        <div class="time-line"><span id="tTimeLabel">เวลา</span><b id="tTime">0:30</b></div>
+        <div id="tCamBox" class="camera" hidden>
+          <video id="tVideo" autoplay playsinline muted></video>
+          <canvas id="tCanvas"></canvas>
+        </div>
+        <div class="controls">
+          <button id="tCancel" class="icon-btn danger" disabled aria-label="ยกเลิก" title="ยกเลิก"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+          <button id="tStart" class="play-btn" disabled aria-label="เริ่มทดสอบ" title="เริ่มทดสอบ"></button>
+          <button id="tPlay" class="btn go" hidden>กดเพื่อเล่นเสียงสัญญาณ</button>
+        </div>
+        <div class="vol">
+          <svg class="i" viewBox="0 0 24 24" style="width:18px;height:18px"><path d="M4 9v6h4l5 4V5L8 9zM16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg>
+          <input id="tVol" type="range" min="0" max="1" step="0.05" value="1" aria-label="ระดับเสียง">
+          <span id="tAudioState">กำลังเตรียมเสียงสัญญาณ...</span>
+        </div>
+      </div>
+
+      <button id="tTap" class="tap" disabled>
+        <span>แตะทุกครั้งที่เท้าขวาแตะพื้น</span>
+        <span class="muted" style="font-size:.85rem; font-weight:500">หรือกด Space บนคีย์บอร์ด</span>
+      </button>
+
+      <div id="tResult" class="card result" hidden>
+        <div class="row-between"><h3>ครบเวลา</h3><span id="tCompare" class="pill"></span></div>
+        <p class="muted" style="font-size:.9rem">ตรวจตัวเลขอีกครั้ง ถ้านับผิดแก้ไขได้ก่อนบันทึก</p>
+        <div class="row">
+          <input id="tFinal" type="number" min="0" max="2000" aria-label="จำนวนครั้ง">
+          <span>ครั้ง (เท้าขวา) ใน <b id="tFinalDur" class="num">30 วินาที</b></span>
+        </div>
+        <label class="switch"><input id="tFalse" type="checkbox"> ออกตัวก่อนเสียง Beep หัก 10 คะแนน</label>
+        <div class="row" style="align-items:baseline"><span class="muted">คะแนนที่จะบันทึก</span><span id="tNet" class="net">0</span></div>
+        <div class="row">
+          <button id="tSave" class="btn go">บันทึกผล</button>
+          <button id="tDiscard" class="btn ghost">ไม่บันทึก</button>
+        </div>
+      </div>
+
+      <details class="card rules">
+        <summary id="tRuleTitle">กติกา</summary>
+        <ul id="tRules"></ul>
+        <p class="eyebrow" style="margin-top:14px">ลำดับเสียงสัญญาณ</p>
+        <ul id="tCues" class="cues"></ul>
+        <p class="muted" style="font-size:.8rem; margin-top:10px">อ้างอิง: ระเบียบและข้อบังคับการแข่งขันกีฬากระโดดเชือกชิงถ้วยพระราชทาน ครั้งที่ 17 ประจำปี 2569</p>
+      </details>
+
+      <p id="tCamNote" class="note" hidden></p>
+      <p class="note"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16v.01"/></svg><span>โหมดกล้อง: วางโทรศัพท์ให้เห็นเต็มตัวถึงข้อเท้า ยืนนิ่ง 5 วินาทีให้ระบบหาระดับพื้น แล้วเสียงสัญญาณจะเริ่มเอง ถ้ากล้องใช้ไม่ได้ ให้ใช้แบบแตะนับ</span></p>
+    </section>
+
+    <!-- ===================== ภารกิจ ===================== -->
+    <section id="view-missions" class="view" hidden>
+      <div class="card" style="display:grid; gap:10px">
+        <div class="row-between">
+          <div class="page-head"><span class="eyebrow">ระดับของฉัน</span><h2 id="mLevel">Lv.1 มือใหม่หัดกระโดด</h2></div>
+          <span id="mClaimable" class="pill up" hidden></span>
+        </div>
+        <div class="xpbar"><i id="mXpBar"></i></div>
+        <p id="mXpText" class="muted num" style="font-size:.85rem"></p>
+      </div>
+
+      <div class="row-between"><h2>ภารกิจวันนี้</h2><span class="pill" id="mDailyReset">รีเซ็ตเที่ยงคืน</span></div>
+      <div id="mDaily" class="mission-list"></div>
+      <div class="row-between" style="margin-top:6px"><h2>ภารกิจสัปดาห์นี้</h2><span class="pill" id="mWeeklyReset">รีเซ็ตวันจันทร์</span></div>
+      <div id="mWeekly" class="mission-list"></div>
+      <p class="note"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16v.01"/></svg><span>ภารกิจนับจากผลฝึกตามโปรแกรมและผลทดสอบที่บันทึกไว้ ทำครบแล้วกดรับ XP ก่อนหมดเวลาภารกิจ</span></p>
+    </section>
+
+    <!-- ===================== ฉัน ===================== -->
+    <section id="view-me" class="view" hidden>
+      <div class="card profile">
+        <div id="pAvatar"></div>
+        <div class="profile-main">
+          <span class="eyebrow" id="pSub">ใช้ในเครื่องนี้</span>
+          <h2 id="pName">นักกระโดด</h2>
+          <div class="rank"><span class="pill hot" id="pLevel">Lv.1</span><span id="pRank"></span><span id="pXp" class="num"></span></div>
+          <div class="xpbar"><i id="pXpBar"></i></div>
+          <p id="pSync" class="muted" style="font-size:.84rem"></p>
+        </div>
+        <div class="row" style="width:100%">
+          <button class="btn ghost sm" data-acct="">สลับ / เพิ่มผู้ฝึก</button>
+          <button id="pRename" class="btn ghost sm">แก้ชื่อ</button>
+          <button id="pSyncNow" class="btn ghost sm" hidden>ส่งข้อมูลตอนนี้</button>
+          <button id="pRelogin" class="btn primary sm" hidden>เข้าสู่ระบบใหม่</button>
+        </div>
+        <form id="pRenameForm" class="row" style="width:100%" hidden>
+          <input id="pRenameInput" type="text" maxlength="40" class="field" style="flex:1; min-width:160px; font:inherit; color:var(--fg); background:var(--card2); border:1px solid var(--line); border-radius:12px; padding:9px 12px" aria-label="ชื่อใหม่">
+          <button class="btn primary sm">บันทึกชื่อ</button>
+        </form>
+      </div>
+
+      <div class="tiles">
+        <div class="card tile"><span class="eyebrow">ฝึกทั้งหมด</span><span class="val" id="sSessions">0</span><span class="sub" id="sMinutes"></span></div>
+        <div class="card tile"><span class="eyebrow">ฝึกต่อเนื่อง</span><span class="val" id="sStreak">0</span><span class="sub" id="sBestStreak"></span></div>
+        <div class="card tile"><span class="eyebrow">ดีที่สุด SRSS</span><span class="val" id="sBest30">—</span><span class="sub">30 วินาที</span></div>
+        <div class="card tile"><span class="eyebrow">ดีที่สุด SRSE</span><span class="val" id="sBest180">—</span><span class="sub">3 นาที</span></div>
+      </div>
+
+      <div class="card" style="display:grid; gap:12px">
+        <div class="row-between">
+          <div class="page-head"><h3>เหรียญความสำเร็จ</h3><p class="muted" style="font-size:.85rem">ทองแดง เงิน ทอง • เป้าหมายสำหรับฝึก ไม่ใช่เกณฑ์ทางการ</p></div>
+          <span id="sMedalCount" class="pill hot">0 / 27</span>
+        </div>
+        <div id="sAchs" class="achs"></div>
+      </div>
+
+      <div class="card" style="display:grid; gap:12px">
+        <div class="row-between">
+          <h3>ผลทดสอบนับครั้ง</h3>
+          <div id="sDur" class="seg"><button data-v="30">SRSS 30 วิ</button><button data-v="180">SRSE 3 นาที</button></div>
+        </div>
+        <div id="sChart" class="chart-wrap"></div>
+      </div>
+
+      <div id="sImport" class="card" style="display:grid; gap:10px" hidden>
+        <h3>ย้ายผลจากโปรไฟล์ในเครื่องเข้าบัญชีนี้</h3>
+        <p class="muted" style="font-size:.88rem">ถ้าเคยฝึกแบบใช้ในเครื่องนี้มาก่อน ย้ายผลเข้าบัญชีโรงเรียนได้ ผลจะถูกส่งให้ครูด้วย</p>
+        <div class="row"><select id="sImportFrom" class="field" style="flex:1; min-width:180px; font:inherit; color:var(--fg); background:var(--card2); border:1px solid var(--line); border-radius:12px; padding:9px 12px" aria-label="เลือกโปรไฟล์"></select><button id="sImportBtn" class="btn primary sm">ย้ายผล</button></div>
+      </div>
+
+      <div class="row">
+        <button id="sCopy" class="btn primary"><svg class="i" viewBox="0 0 24 24" style="width:18px;height:18px"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>คัดลอกสรุปผล ส่ง LINE ครู</button>
+        <button id="sCsv" class="btn ghost"><svg class="i" viewBox="0 0 24 24" style="width:18px;height:18px"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>ส่งออก Excel (CSV)</button>
+        <button id="sCsvAll" class="btn ghost" hidden>ส่งออกทุกคนในเครื่อง</button>
+        <button id="sClear" class="btn danger">ลบผลของฉัน</button>
+      </div>
+      <div id="sConfirm" class="confirm" hidden>
+        <span id="sConfirmText"></span>
+        <button id="sConfirmYes" class="btn danger">ยืนยันลบ</button>
+        <button id="sConfirmNo" class="btn ghost">ยกเลิก</button>
+      </div>
+
+      <div class="card table-wrap">
+        <table>
+          <thead><tr><th>วันที่</th><th>รายการ</th><th>รายละเอียด</th><th>ผล</th><th></th></tr></thead>
+          <tbody id="sBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer class="wrap">ออกแบบสำหรับวิชาสุขศึกษาและพลศึกษา ใช้ได้ทั้งคอมพิวเตอร์และโทรศัพท์</footer>
+</div>
+
+<!-- ===================== หน้าต่างผู้ฝึก / เข้าสู่ระบบ ===================== -->
+<div id="acct" class="overlay" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="acctTitle">
+    <div class="sheet-head"><h3 id="acctTitle">ผู้ฝึกในเครื่องนี้</h3><button id="acctClose" class="icon-btn sm" aria-label="ปิด"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div id="acctUsers" class="user-list"></div>
+    <span id="acctAddLabel" class="eyebrow" hidden>เพิ่มผู้ฝึกอีกคน หรือเข้าสู่ระบบบัญชีอื่น</span>
+
+    <div id="acctTabs" class="seg full"><button data-v="login">บัญชีโรงเรียน</button><button data-v="local">ใช้ในเครื่องนี้</button></div>
+
+    <form id="fLogin" autocomplete="off" style="display:grid; gap:10px">
+      <p id="noSchool" class="note" hidden><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16v.01"/></svg><span>ยังไม่ได้เชื่อมระบบโรงเรียน ให้เปิดโปรแกรมจากลิงก์ที่ครูส่งให้ หรือครูตั้งค่าที่ "สำหรับครู" ด้านล่าง</span></p>
+      <fieldset id="loginFields">
+        <div id="loginMode" class="seg full soft"><button type="button" data-v="login">เข้าสู่ระบบ</button><button type="button" data-v="register">สมัครครั้งแรก</button></div>
+        <div class="fields2">
+          <label class="field">รหัสห้อง<input id="lgClass" type="text" maxlength="30" placeholder="เช่น ม.1/2" autocapitalize="characters"></label>
+          <label class="field">เลขที่<input id="lgNo" type="number" min="1" max="999" inputmode="numeric" placeholder="เช่น 5"></label>
+        </div>
+        <label class="field" id="lgNameWrap">ชื่อที่จะแสดง (ชื่อเล่นหรือชื่อจริง)<input id="lgName" type="text" maxlength="40" placeholder="เช่น ด.ช.สมชาย"></label>
+        <div class="fields2">
+          <label class="field">PIN 4–6 หลัก<input id="lgPin" type="password" inputmode="numeric" maxlength="6" autocomplete="off"></label>
+          <label class="field" id="lgPin2Wrap">ยืนยัน PIN<input id="lgPin2" type="password" inputmode="numeric" maxlength="6" autocomplete="off"></label>
+        </div>
+        <p id="lgMsg" class="form-msg"></p>
+        <button id="lgSubmit" class="btn primary block" type="submit">เข้าสู่ระบบ</button>
+        <p class="muted" style="font-size:.8rem">ลืม PIN ให้บอกครู ครูจะลบ PIN แล้วให้กด "สมัครครั้งแรก" เพื่อตั้งใหม่ ผลฝึกเดิมยังอยู่ครบ</p>
+      </fieldset>
+    </form>
+
+    <form id="fLocal" autocomplete="off" style="display:grid; gap:10px" hidden>
+      <p class="muted" style="font-size:.88rem">ผลฝึกจะเก็บไว้ในเครื่องนี้เท่านั้น ครูจะเห็นผลเมื่อส่งสรุปหรือไฟล์ให้</p>
+      <label class="field">ชื่อผู้ฝึก<input id="lcName" type="text" maxlength="40" placeholder="เช่น ด.ช.สมชาย ม.1/2"></label>
+      <p id="lcMsg" class="form-msg"></p>
+      <button class="btn primary block" type="submit">เพิ่มผู้ฝึก</button>
+    </form>
+
+    <details class="card" style="padding:14px">
+      <summary>สำหรับครู: เชื่อมระบบโรงเรียน</summary>
+      <div style="display:grid; gap:10px">
+        <p class="muted" style="font-size:.86rem">วางลิงก์เว็บแอปจาก Google Apps Script (ลงท้ายด้วย /exec) หรือรหัสการทำให้ใช้งานได้</p>
+        <label class="field">ลิงก์หรือรหัสระบบโรงเรียน<input id="schoolInput" type="text" placeholder="https://script.google.com/macros/s/.../exec"></label>
+        <div class="row"><button id="schoolSave" class="btn primary sm" type="button">เชื่อมต่อ</button><button id="schoolClear" class="btn ghost sm" type="button">ยกเลิกการเชื่อม</button></div>
+        <p id="schoolMsg" class="form-msg"></p>
+        <div id="shareWrap" hidden style="display:grid; gap:6px">
+          <span class="eyebrow">ลิงก์สำหรับแจกนักเรียน</span>
+          <div class="link-box"><code id="shareLink"></code><button id="shareCopy" class="btn ghost sm" type="button">คัดลอก</button></div>
+        </div>
+      </div>
+    </details>
+  </div>
+</div>
+
+<!-- ===================== ฉลองความสำเร็จ ===================== -->
+<div id="celebrate" class="celebrate" hidden>
+  <div class="celeb-card" role="dialog" aria-modal="true" aria-labelledby="celebTitle">
+    <div class="rays" aria-hidden="true"></div>
+    <div id="celebMedal" class="celeb-medal"></div>
+    <span id="celebEyebrow" class="eyebrow"></span>
+    <h3 id="celebTitle"></h3>
+    <p id="celebSub" class="muted"></p>
+    <button id="celebOk" class="btn primary block" style="margin-top:10px">เยี่ยมเลย!</button>
+  </div>
+</div>
+
+<div id="toast" class="toast" hidden></div>
+
+<script type="module">
+const $ = (id) => document.getElementById(id);
+
+/* =========================================================
+   ตั้งค่าระบบโรงเรียน
+   SCHOOL_ID = รหัสการทำให้ใช้งานได้ (Deployment ID) ของ Google Apps Script ของโรงเรียน
+   เว้นว่างไว้ได้ แล้วส่งลิงก์ให้นักเรียนในรูปแบบ  .../index.html?s=รหัส  แทน
+   ========================================================= */
+const CONFIG = { SCHOOL_ID: "" };
+
+/* =========================================================
+   ข้อมูลท่าและแผนฝึก (แก้ไขได้ตรงนี้)
+   ========================================================= */
+const MOVES = [
+  { id: "basic", name: "กระโดดสองเท้า", en: "Basic Bounce", lv: 1, tip: "เท้าชิด กระโดดต่ำ 2–3 ซม. ลงด้วยปลายเท้า หมุนเชือกด้วยข้อมือ ศอกแนบลำตัว" },
+  { id: "alt", name: "สลับเท้า (Speed Step)", en: "Speed Step / Jogging Step", lv: 1, tip: "ท่าที่ใช้แข่งประเภทสปีด ยกเท้าซ้าย-ขวาสลับเหมือนวิ่งอยู่กับที่ กรรมการนับเฉพาะเท้าขวาที่แตะพื้น" },
+  { id: "boxer", name: "ก้าวแบบนักมวย", en: "Boxer Step", lv: 2, tip: "ถ่ายน้ำหนักซ้ายทีขวาที เท้าแตะพื้นเบา ๆ ใช้พักแรงโดยไม่หยุดเชือก" },
+  { id: "side", name: "กระโดดซ้าย-ขวา", en: "Side to Side", lv: 2, tip: "กระโดดสองเท้าไปซ้ายทีขวาที ห่างประมาณ 10–15 ซม." },
+  { id: "fb", name: "กระโดดหน้า-หลัง", en: "Forward–Back", lv: 2, tip: "กระโดดสองเท้าไปข้างหน้าแล้วถอยหลังสลับกัน ลำตัวตั้งตรง" },
+  { id: "one", name: "กระโดดเท้าเดียว", en: "Single Leg Hop", lv: 3, tip: "กระโดดขาเดียว 10 ครั้งแล้วเปลี่ยนขา ฝึกการทรงตัว" },
+  { id: "knee", name: "ยกเข่าสูง", en: "High Knees", lv: 3, tip: "สลับเท้าโดยยกเข่าสูงระดับสะโพก ใช้แรงมากขึ้น" },
+  { id: "cross", name: "ไขว้เชือก", en: "Criss-Cross", lv: 4, tip: "ไขว้แขนหน้าลำตัวตอนเชือกลงต่ำ กระโดดผ่าน แล้วกางแขนออกรอบถัดไป" },
+  { id: "du", name: "กระโดดสองรอบ", en: "Double Under (DU)", lv: 5, tip: "เชือกผ่านใต้เท้า 2 รอบในการกระโดด 1 ครั้ง ในการแข่งนับเมื่อเท้าทั้งสองแตะพื้นพร้อมกันโดยไม่สะดุด" },
+  { id: "tu", name: "กระโดดสามรอบ", en: "Triple Under (TU)", lv: 5, tip: "เชือกผ่านใต้เท้า 3 รอบต่อการกระโดด 1 ครั้ง ต้องกระโดดสูงและหมุนข้อมือเร็วมาก ฝึกเมื่อทำ DU ได้คล่องแล้ว" }
+];
+const MOVE = Object.fromEntries(MOVES.map((m) => [m.id, m]));
+
+const PLANS = [
+  {
+    id: "beg", label: "เริ่มต้น", who: "มือใหม่ หรือ ป.4–ป.6", goal: "กระโดดต่อเนื่องได้ 30 วินาทีโดยไม่สะดุด",
+    weeks: [
+      { rounds: 6, work: 20, rest: 40, moves: ["basic"] },
+      { rounds: 8, work: 20, rest: 30, moves: ["basic", "alt"] },
+      { rounds: 8, work: 30, rest: 30, moves: ["basic", "alt", "boxer"] },
+      { rounds: 10, work: 30, rest: 30, moves: ["basic", "alt", "boxer", "side"] }
+    ]
+  },
+  {
+    id: "mid", label: "กลาง", who: "ม.1–ม.3 หรือกระโดดต่อเนื่องได้ 1 นาที", goal: "กระโดดต่อเนื่อง 90 วินาที และเปลี่ยนท่าได้คล่อง",
+    weeks: [
+      { rounds: 8, work: 30, rest: 30, moves: ["basic", "alt", "side", "fb"] },
+      { rounds: 10, work: 40, rest: 20, moves: ["basic", "alt", "side", "fb", "boxer"] },
+      { rounds: 6, work: 60, rest: 30, moves: ["alt", "knee", "side", "boxer"] },
+      { rounds: 5, work: 90, rest: 30, moves: ["basic", "alt", "knee", "fb"] }
+    ]
+  },
+  {
+    id: "adv", label: "ก้าวหน้า", who: "ม.4–ม.6 หรือนักกีฬา", goal: "เพิ่มความเร็ว ความทนทาน และท่ายาก",
+    weeks: [
+      { rounds: 10, work: 45, rest: 15, moves: ["alt", "knee", "one", "cross"] },
+      { rounds: 8, work: 60, rest: 20, moves: ["basic", "knee", "cross", "side"] },
+      { rounds: 16, work: 20, rest: 10, moves: ["knee", "alt", "du", "basic"], note: "แบบทาบาตา 2 ชุด" },
+      { rounds: 3, work: 180, rest: 60, moves: ["alt", "alt", "alt"] }
+    ]
+  }
+];
+
+/* ฝึกตามจังหวะ: 15 ระดับ เริ่ม 100 BPM เพิ่มทีละ 10 (แก้ตัวเลขได้ตรงนี้)
+   1 BPM = เสียง 1 ครั้ง = เท้าแตะพื้น 1 ครั้ง (ซ้ายหรือขวา) */
+const BPM_START = 100, BPM_STEP = 10, LEVEL_COUNT = 15;
+const LEVELS = Array.from({ length: LEVEL_COUNT }, (_, i) => ({ lv: i + 1, bpm: BPM_START + i * BPM_STEP }));
+
+/* รายการแข่งขันประเภทสปีด เวลา start/end คือวินาทีที่เสียง Beep ดังในไฟล์เสียง (วัดจากไฟล์จริง) */
+const EVENTS = {
+  30: {
+    code: "SRSS", th: "เดี่ยวบุคคลสปีด 30 วินาที", label: "30 วินาที",
+    files: ["audio/srss-30s.mp3", "เสียง/เสียงการแข่ง/30sec-SRSS.mp3", "30sec-SRSS.mp3"],
+    start: 9.22, end: 39.22,
+    cues: ["Single Rope Speed Sprint 30 Seconds", "Judges Ready", "Athletes Ready", "Set", "Beep", "10", "20", "Beep"]
+  },
+  180: {
+    code: "SRSE", th: "เดี่ยวบุคคลสปีด 180 วินาที", label: "3 นาที",
+    files: ["audio/srse-3min.mp3", "เสียง/เสียงการแข่ง/3min (SRSE) Single Rope Speed Endurance.mp3"],
+    start: 10.28, end: 190.28,
+    cues: ["Single Rope Speed Endurance 180 Seconds", "Judges Ready", "Athletes Ready", "Set", "Beep", "15", "30", "45", "1 Minute", "15", "30", "45", "2 Minutes", "15", "30", "45", "Beep"]
+  }
+};
+
+/* วันแข่งที่แสดงนับถอยหลังบนหน้าแรก (ซ่อนเองเมื่อเลยวันแข่ง) */
+const COMPETITION = {
+  name: "กระโดดเชือกชิงถ้วยพระราชทาน ครั้งที่ 17",
+  start: "2026-11-28", end: "2026-11-29",
+  dateLabel: "28–29 พ.ย. 2569", place: "ศูนย์เยาวชนกรุงเทพมหานคร (ไทย-ญี่ปุ่น)"
+};
+
+/* ---------- XP / เลเวล / เหรียญ / ภารกิจ (ปรับตัวเลขได้ตรงนี้) ---------- */
+const XP_RULES = { firstOfDay: 10, workoutFull: 40, workoutPartial: 15, test: 25, personalBest: 30 };
+const RANKS = [
+  [1, "มือใหม่หัดกระโดด"], [3, "นักกระโดดฝึกหัด"], [5, "นักกระโดดตัวจริง"],
+  [8, "นักกีฬาดาวรุ่ง"], [11, "นักกีฬาตัวจริง"], [15, "ตำนานเชือกกระโดด"]
+];
+const TIER_NAMES = ["", "ทองแดง", "เงิน", "ทอง"];
+const ACHIEVEMENTS = [
+  { id: "streak", icon: "fire", name: "ไฟไม่มอด", desc: "ฝึกติดต่อกัน", unit: "วัน", tiers: [3, 7, 14], metric: (s) => s.bestStreak },
+  { id: "days", icon: "calendar", name: "ขยันซ้อม", desc: "จำนวนวันที่ฝึก", unit: "วัน", tiers: [5, 15, 30], metric: (s) => s.days },
+  { id: "minutes", icon: "timer", name: "ปอดเหล็ก", desc: "เวลาฝึกรวม", unit: "นาที", tiers: [30, 120, 300], metric: (s) => s.minutes },
+  { id: "workouts", icon: "bolt", name: "ตามแผนเป๊ะ", desc: "ฝึกตามโปรแกรมครบ", unit: "ครั้ง", tiers: [3, 10, 30], metric: (s) => s.fullWorkouts },
+  { id: "srss", icon: "stopwatch", name: "สปรินเตอร์", desc: "SRSS 30 วินาที", unit: "ครั้ง", tiers: [50, 70, 90], metric: (s) => s.b30 || 0 },
+  { id: "srse", icon: "repeat", name: "อึดถึกทน", desc: "SRSE 3 นาที", unit: "ครั้ง", tiers: [200, 300, 400], metric: (s) => s.b180 || 0 },
+  { id: "pb", icon: "trophy", name: "เหนือกว่าเมื่อวาน", desc: "ทำลายสถิติตัวเอง", unit: "ครั้ง", tiers: [1, 5, 10], metric: (s) => s.pbs },
+  { id: "clean", icon: "flag", name: "ออกตัวเป๊ะ", desc: "ทดสอบโดยไม่ออกตัวก่อนสัญญาณ", unit: "ครั้ง", tiers: [3, 10, 25], metric: (s) => s.cleanTests },
+  { id: "missions", icon: "target", name: "นักล่าภารกิจ", desc: "ภารกิจที่ทำสำเร็จ", unit: "ภารกิจ", tiers: [5, 20, 50], metric: (s) => s.claimCount }
+];
+const sumMin = (rs) => Math.floor(rs.reduce((a, r) => a + secOf(r), 0) / 60);
+const isFull = (r) => r.type === "workout" && !String(r.detail || "").includes("(ไม่ครบ)");
+const DAILY = [
+  { id: "wo1", icon: "bolt", c: "o", name: "ฝึกตามโปรแกรม 1 ครั้ง", target: 1, xp: 30, metric: (rs) => rs.filter((r) => r.type === "workout").length },
+  { id: "jump5", icon: "timer", c: "b", name: "กระโดดรวม 5 นาที", unit: "นาที", target: 5, xp: 30, metric: (rs) => sumMin(rs) },
+  { id: "srss1", icon: "stopwatch", c: "g", name: "ทดสอบ SRSS 30 วินาที 1 ครั้ง", target: 1, xp: 25, metric: (rs) => rs.filter((r) => isTest(r) && secOf(r) === 30).length },
+  { id: "clean", icon: "flag", c: "y", name: "ทดสอบโดยไม่ออกตัวก่อนเสียง Beep", target: 1, xp: 25, metric: (rs) => rs.filter((r) => isTest(r) && !r.falseStart).length },
+  { id: "near90", icon: "target", c: "v", name: "ทำ SRSS ได้อย่างน้อย 90% ของสถิติตัวเอง", target: 1, xp: 35, metric: (rs, c) => rs.filter((r) => isTest(r) && secOf(r) === 30 && r.value >= Math.ceil(0.9 * (c.best30Before || 0))).length },
+  { id: "two", icon: "repeat", c: "p", name: "ฝึกหรือทดสอบ 2 ครั้งในวันนี้", target: 2, xp: 30, metric: (rs) => rs.length }
+];
+const WEEKLY = [
+  { id: "days3", icon: "calendar", c: "o", name: "ฝึก 3 วันในสัปดาห์นี้", unit: "วัน", target: 3, xp: 80, metric: (rs) => new Set(rs.map((r) => dayKey(r.date))).size },
+  { id: "pb", icon: "trophy", c: "y", name: "ทำลายสถิติ SRSS หรือ SRSE ของตัวเอง", target: 1, xp: 100, metric: (rs, c) => rs.filter((r) => c.pbIds.has(String(r.id))).length },
+  { id: "srse1", icon: "stopwatch", c: "b", name: "ทดสอบ SRSE 3 นาที 1 ครั้ง", target: 1, xp: 60, metric: (rs) => rs.filter((r) => isTest(r) && secOf(r) === 180).length },
+  { id: "jump20", icon: "timer", c: "g", name: "กระโดดรวม 20 นาที", unit: "นาที", target: 20, xp: 80, metric: (rs) => sumMin(rs) },
+  { id: "wo3", icon: "bolt", c: "v", name: "ฝึกตามโปรแกรมครบ 3 ครั้ง", unit: "ครั้ง", target: 3, xp: 80, metric: (rs) => rs.filter(isFull).length }
+];
+
+const SVG = {
+  bolt: '<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',
+  timer: '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/>',
+  stopwatch: '<circle cx="12" cy="13" r="8"/><path d="M12 9v4M9 2h6M19 6l1.5-1.5"/>',
+  flag: '<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>',
+  target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/>',
+  repeat: '<path d="M17 2l3 3-3 3M4 11V9a4 4 0 0 1 4-4h12M7 22l-3-3 3-3M20 13v2a4 4 0 0 1-4 4H4"/>',
+  calendar: '<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+  trophy: '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0zM17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/>',
+  fire: '<path d="M12 2c.6 3.2 4.8 5.6 4.8 10.4a4.8 4.8 0 0 1-9.6 0c0-2.2 1.1-3.6 2.2-4.6.1 1.8.9 3 2 3.2C11 8.4 10.9 5 12 2z"/>',
+  check: '<path d="M5 12l5 5L20 7"/>',
+  x: '<path d="M6 6l12 12M18 6L6 18"/>',
+  star: '<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/>'
+};
+const icon = (name, cls = "i") => `<svg class="${cls}" viewBox="0 0 24 24">${SVG[name] || ""}</svg>`;
+const ICON = {
+  play: `<svg viewBox="0 0 24 24"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>`,
+  pause: `<svg viewBox="0 0 24 24"><rect x="6" y="5" width="4.5" height="14" rx="1.2"/><rect x="13.5" y="5" width="4.5" height="14" rx="1.2"/></svg>`,
+  stop: `<svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2.5"/></svg>`
+};
+function setMainBtn(btn, mode, label) { btn.innerHTML = ICON[mode]; btn.setAttribute("aria-label", label); btn.title = label; }
+
+/* =========================================================
+   ตัวช่วยทั่วไป
+   ========================================================= */
+const mem = {};
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v === null ? (k in mem ? mem[k] : d) : JSON.parse(v); } catch { return k in mem ? mem[k] : d; } },
+  set(k, v) { mem[k] = v; try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+};
+const pad2 = (n) => String(n).padStart(2, "0");
+const fmt = (s) => { s = Math.max(0, Math.round(s)); return `${Math.floor(s / 60)}:${pad2(s % 60)}`; };
+const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const fmtDate = (iso) => new Date(iso).toLocaleString("th-TH", { dateStyle: "short", timeStyle: "short" });
+const dayKey = (d) => { const x = new Date(d); return `${x.getFullYear()}-${pad2(x.getMonth() + 1)}-${pad2(x.getDate())}`; };
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const RING_C = 2 * Math.PI * 88;
+function setRing(el, frac) { el.style.strokeDashoffset = String(RING_C * (1 - Math.min(1, Math.max(0, frac)))); }
+const isTest = (r) => r.type === "test" || r.type === "count";
+const secOf = (r) => Number(r.seconds ?? r.duration ?? 0) || 0;
+
+function toast(msg) {
+  const t = $("toast"); t.textContent = msg; t.hidden = false;
+  clearTimeout(toast.id); toast.id = setTimeout(() => (t.hidden = true), 2800);
+}
+function setPressed(container, value) {
+  container.querySelectorAll("[data-v]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.v === String(value))));
+}
+function chipGroup(id, initial, onChange) {
+  const el = typeof id === "string" ? $(id) : id;
+  setPressed(el, initial);
+  el.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-v]"); if (!b || el.dataset.locked === "1") return;
+    setPressed(el, b.dataset.v); onChange(b.dataset.v);
+  });
+  return el;
+}
+
+/* ---------- เสียงสังเคราะห์ ---------- */
+let actx = null;
+function audio() {
+  if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+  if (actx.state === "suspended") actx.resume();
+  return actx;
+}
+function beep(freq = 900, len = 0.08, vol = 0.5, at) {
+  try {
+    const c = audio(); const t = at ?? c.currentTime;
+    const o = c.createOscillator(); const g = c.createGain();
+    o.frequency.value = freq; o.connect(g); g.connect(c.destination);
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + len);
+    o.start(t); o.stop(t + len + 0.02);
+  } catch {}
+}
+function fanfare() {
+  try { const c = audio(), t = c.currentTime; [523, 659, 784, 1046].forEach((f, i) => beep(f, 0.18, 0.35, t + i * 0.09)); } catch {}
+}
+function speak(text) {
+  if (!$("cVoice").checked) return;
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text); u.lang = "th-TH"; u.rate = 1.05;
+    speechSynthesis.speak(u);
+  } catch {}
+}
+
+/* ---------- เครื่องให้จังหวะ 2 จังหวะ ซ้าย-ขวา ---------- */
+function makeMetronome(getBpm, onBeat) {
+  let id = null, next = 0, i = 0;
+  return {
+    start() {
+      const c = audio(); next = c.currentTime + 0.12; i = 0;
+      id = setInterval(() => {
+        while (next < c.currentTime + 0.1) {
+          const first = i % 2 === 0; // 1 = ซ้าย (เสียงสูง), 2 = ขวา (เสียงต่ำ)
+          beep(first ? 1100 : 760, 0.045, 0.55, next);
+          const delay = Math.max(0, (next - c.currentTime) * 1000);
+          setTimeout(() => onBeat && onBeat(first), delay);
+          next += 60 / getBpm(); i++;
+        }
+      }, 25);
+    },
+    stop() { clearInterval(id); id = null; },
+    get running() { return id !== null; }
+  };
+}
+
+let wake = null;
+async function keepAwake(on) {
+  try {
+    if (on && !wake && navigator.wakeLock) wake = await navigator.wakeLock.request("screen");
+    if (!on && wake) { await wake.release(); wake = null; }
+  } catch { wake = null; }
+}
+
+/* =========================================================
+   ผู้ฝึก (โปรไฟล์ในเครื่อง + บัญชีโรงเรียน) และผลการฝึก
+   ========================================================= */
+const REC_KEY = "jumpRopeRecords", USERS_KEY = "jr.users", ACTIVE_KEY = "jr.active", CLAIMS_KEY = "jr.claims";
+const loadRecords = () => { const r = store.get(REC_KEY, []); return Array.isArray(r) ? r : []; };
+const saveRecords = (rs) => store.set(REC_KEY, rs);
+let users = store.get(USERS_KEY, []); if (!Array.isArray(users)) users = [];
+let activeId = store.get(ACTIVE_KEY, null);
+let claims = store.get(CLAIMS_KEY, {}); if (!claims || typeof claims !== "object") claims = {};
+const saveUsers = () => { store.set(USERS_KEY, users); store.set(ACTIVE_KEY, activeId); };
+const saveClaims = () => store.set(CLAIMS_KEY, claims);
+const me = () => users.find((u) => u.id === activeId) || null;
+const recordsOf = (id) => loadRecords().filter((r) => r.userId === id);
+const myRecords = () => (activeId ? recordsOf(activeId) : []);
+
+(function migrate() {
+  // เวอร์ชันก่อนเก็บผลด้วยชื่ออย่างเดียว: สร้างโปรไฟล์ในเครื่องให้แต่ละชื่อ
+  const recs = loadRecords();
+  const oldName = String(store.get("jr.name", "") || "").trim();
+  if (!users.length) {
+    const names = [...new Set(recs.filter((r) => !r.userId).map((r) => r.name || "ไม่ระบุชื่อ"))];
+    if (oldName && !names.includes(oldName)) names.push(oldName);
+    names.forEach((n) => users.push({ id: uid(), mode: "local", name: n, createdAt: new Date().toISOString() }));
+    activeId = (users.find((u) => u.name === oldName) || users[0] || {}).id || null;
+  }
+  let changed = false;
+  recs.forEach((r) => {
+    if (!r.userId) { const u = users.find((x) => x.name === (r.name || "ไม่ระบุชื่อ")); if (u) { r.userId = u.id; changed = true; } }
+    if (typeof r.id !== "string") { r.id = String(r.id ?? uid()); changed = true; }
+  });
+  if (changed) saveRecords(recs);
+  if (activeId && !me()) activeId = users[0]?.id || null;
+  saveUsers();
+})();
+
+function ensureUser() {
+  if (me()) return me();
+  const u = { id: uid(), mode: "local", name: "ผู้ฝึก", createdAt: new Date().toISOString() };
+  users.push(u); activeId = u.id; saveUsers();
+  toast("สร้างผู้ฝึกในเครื่องชื่อ \"ผู้ฝึก\" แก้ชื่อได้ที่หน้า ฉัน");
+  return u;
+}
+function saveRecord(rec) {
+  withProgress(() => {
+    const u = ensureUser();
+    const all = loadRecords();
+    all.push({ id: uid(), date: new Date().toISOString(), userId: u.id, name: u.name, synced: false, ...rec });
+    saveRecords(all);
+  });
+  scheduleSync();
+}
+
+/* ---------- วิเคราะห์ผล: สถิติ XP เลเวล เหรียญ ---------- */
+function streakOf(days) {
+  const d = new Date(); if (!days.has(dayKey(d))) d.setDate(d.getDate() - 1);
+  let n = 0; while (days.has(dayKey(d))) { n++; d.setDate(d.getDate() - 1); }
+  return n;
+}
+function bestStreakOf(days) {
+  const sorted = [...days].sort();
+  let best = 0, run = 0, prev = null;
+  sorted.forEach((k) => {
+    const t = new Date(k + "T00:00:00").getTime();
+    run = prev !== null && Math.round((t - prev) / 86400000) === 1 ? run + 1 : 1;
+    best = Math.max(best, run); prev = t;
+  });
+  return best;
+}
+function levelOf(xp) {
+  let lv = 1, need = 100, rem = xp;
+  while (rem >= need) { rem -= need; lv++; need += 50; }
+  return { level: lv, into: rem, need };
+}
+const rankOf = (lv) => RANKS.filter(([min]) => lv >= min).pop()[1];
+const tierOf = (v, tiers) => tiers.filter((t) => v >= t).length;
+
+function analyze(userId) {
+  const recs = (userId ? recordsOf(userId) : []).sort((a, b) => new Date(a.date) - new Date(b.date));
+  const best = {}, pbIds = new Set(), days = new Set();
+  let secs = 0, cleanTests = 0, fullWorkouts = 0, xp = 0;
+  recs.forEach((r) => {
+    const dk = dayKey(r.date);
+    if (!days.has(dk)) { days.add(dk); xp += XP_RULES.firstOfDay; }
+    secs += secOf(r);
+    if (isTest(r)) {
+      const s = secOf(r);
+      if (best[s] != null && r.value > best[s]) { pbIds.add(String(r.id)); xp += XP_RULES.personalBest; }
+      best[s] = Math.max(best[s] ?? -Infinity, Number(r.value) || 0);
+      if (!r.falseStart) cleanTests++;
+      xp += XP_RULES.test;
+    } else if (r.type === "workout") {
+      if (isFull(r)) { fullWorkouts++; xp += XP_RULES.workoutFull; } else xp += XP_RULES.workoutPartial;
+    }
+  });
+  const uc = (userId && claims[userId]) || {};
+  const claimCount = Object.keys(uc).length;
+  xp += Object.values(uc).reduce((a, c) => a + (Number(c.xp) || 0), 0);
+  const s = {
+    recs, sessions: recs.length, minutes: Math.round(secs / 60), days: days.size, streak: streakOf(days), bestStreak: bestStreakOf(days),
+    b30: best[30] ?? null, b180: best[180] ?? null, pbs: pbIds.size, pbIds, cleanTests, fullWorkouts, claimCount, xp, ...levelOf(xp)
+  };
+  s.tiers = Object.fromEntries(ACHIEVEMENTS.map((a) => [a.id, tierOf(a.metric(s), a.tiers)]));
+  s.medals = Object.values(s.tiers).reduce((a, b) => a + b, 0);
+  return s;
+}
+
+/* ---------- ภารกิจรายวัน / รายสัปดาห์ ---------- */
+function periodStart(kind, now = new Date()) {
+  const d = new Date(now); d.setHours(0, 0, 0, 0);
+  if (kind === "w") d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  return d;
+}
+function seeded(str) {
+  let h = 2166136261;
+  for (const ch of str) { h ^= ch.codePointAt(0); h = Math.imul(h, 16777619); }
+  return () => { h ^= h << 13; h ^= h >>> 17; h ^= h << 5; return ((h >>> 0) % 100000) / 100000; };
+}
+function pickSome(pool, n, key) {
+  const rnd = seeded(key), arr = pool.slice();
+  for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; }
+  return arr.slice(0, n);
+}
+function missionsFor(userId, s = analyze(userId), now = new Date()) {
+  const out = [], uc = (userId && claims[userId]) || {};
+  for (const kind of ["d", "w"]) {
+    const start = periodStart(kind, now), pk = `${kind}-${dayKey(start)}`;
+    const inP = s.recs.filter((r) => new Date(r.date) >= start);
+    const before = s.recs.filter((r) => new Date(r.date) < start && isTest(r) && secOf(r) === 30).map((r) => r.value);
+    const ctx = { best30Before: before.length ? Math.max(...before) : 0, pbIds: s.pbIds };
+    const list = kind === "d" ? pickSome(DAILY, 3, pk) : [WEEKLY[0], ...pickSome(WEEKLY.slice(1), 2, pk)];
+    list.forEach((m) => {
+      const prog = Math.min(m.target, m.metric(inP, ctx));
+      const key = `${pk}:${m.id}`;
+      out.push({ ...m, kind, key, prog, done: prog >= m.target, claimed: !!uc[key] });
+    });
+  }
+  return out;
+}
+
+/* ---------- ฉลองเมื่อปลดล็อก ---------- */
+const celebQueue = [];
+function snapshot() { const s = analyze(activeId); const ms = missionsFor(activeId, s); return { level: s.level, tiers: s.tiers, ready: ms.filter((m) => m.done && !m.claimed).length }; }
+function withProgress(fn) {
+  const before = activeId ? snapshot() : { level: 1, tiers: {}, ready: 0 };
+  fn();
+  const after = snapshot();
+  if (after.level > before.level) celebrate({ kind: "level", title: `เลเวล ${after.level}!`, eyebrow: "เลเวลอัป", sub: rankOf(after.level) });
+  ACHIEVEMENTS.forEach((a) => {
+    const t = after.tiers[a.id] || 0;
+    if (t > (before.tiers[a.id] || 0)) celebrate({ kind: "medal", tier: t, icon: a.icon, eyebrow: `ได้เหรียญ${TIER_NAMES[t]}`, title: a.name, sub: `${a.desc} ${a.tiers[t - 1]} ${a.unit}` });
+  });
+  if (after.ready > before.ready) toast("ภารกิจสำเร็จ! ไปกดรับ XP ที่หน้า ภารกิจ");
+  refreshAll();
+}
+function celebrate(item) { celebQueue.push(item); if ($("celebrate").hidden) nextCeleb(); }
+function nextCeleb() {
+  const it = celebQueue.shift();
+  if (!it) { $("celebrate").hidden = true; return; }
+  const m = $("celebMedal");
+  m.dataset.tier = it.kind === "medal" ? it.tier : "";
+  m.innerHTML = it.kind === "level" ? `<b>${it.title.replace(/\D/g, "")}</b>` : icon(it.kind === "medal" ? it.icon : "star");
+  $("celebEyebrow").textContent = it.eyebrow || "";
+  $("celebTitle").textContent = it.title;
+  $("celebSub").textContent = it.sub || "";
+  $("celebrate").hidden = false;
+  fanfare();
+  setTimeout(() => $("celebOk").focus(), 50);
+}
+$("celebOk").addEventListener("click", nextCeleb);
+
+/* =========================================================
+   ระบบโรงเรียน (Google Apps Script) และการซิงก์
+   ========================================================= */
+const SCHOOL_RE = /^[A-Za-z0-9_-]{20,140}$/;
+(function readSchoolFromLink() {
+  try { const p = new URLSearchParams(location.search).get("s"); if (p && SCHOOL_RE.test(p)) store.set("jr.school", p); } catch {}
+})();
+const schoolId = () => store.get("jr.school", "") || CONFIG.SCHOOL_ID;
+const urlFor = (id) => store.get("jr.apiOverride", "") || (id ? `https://script.google.com/macros/s/${id}/exec` : "");
+const apiUrl = () => urlFor(schoolId());
+const apiFor = (u) => urlFor(u.school || schoolId());
+
+async function api(url, action, payload) {
+  if (!url) { const e = new Error("ยังไม่ได้เชื่อมระบบโรงเรียน"); e.code = "noapi"; throw e; }
+  const ctl = new AbortController(); const timer = setTimeout(() => ctl.abort(), 20000);
+  let res;
+  try {
+    // ส่งแบบ text/plain เพื่อไม่ให้เบราว์เซอร์ถามสิทธิ์ล่วงหน้า (Apps Script รองรับแบบนี้)
+    res = await fetch(url, { method: "POST", body: JSON.stringify({ action, ...payload }), signal: ctl.signal, redirect: "follow" });
+  } catch {
+    const e = new Error("เชื่อมต่อระบบโรงเรียนไม่ได้ ตรวจอินเทอร์เน็ต หรือเปิดจากลิงก์ที่ครูส่งให้"); e.code = "network"; throw e;
+  } finally { clearTimeout(timer); }
+  let data;
+  try { data = await res.json(); } catch { const e = new Error("ระบบโรงเรียนตอบกลับไม่ถูกต้อง ให้ครูตรวจการ Deploy"); e.code = "bad"; throw e; }
+  if (!data.ok) { const e = new Error(data.error || "เกิดข้อผิดพลาด"); e.code = data.code; throw e; }
+  return data;
+}
+
+const sync = { busy: false, error: "", timer: null, lastOk: null };
+function pendingOf(u) {
+  return recordsOf(u.id).filter((r) => !r.synced).length + Object.values(claims[u.id] || {}).filter((c) => !c.synced).length;
+}
+function scheduleSync(delay = 1200) { clearTimeout(sync.timer); sync.timer = setTimeout(syncActive, delay); }
+async function syncActive() {
+  const u = me();
+  if (!u || u.mode !== "online" || u.needLogin || sync.busy) { renderSyncState(); return; }
+  sync.busy = true; renderSyncState();
+  try {
+    const pending = recordsOf(u.id).filter((r) => !r.synced).map((r) => ({
+      id: String(r.id), date: r.date, type: r.type, detail: r.detail, result: r.result, value: Number(r.value) || 0, seconds: secOf(r), falseStart: !!r.falseStart
+    }));
+    const pc = Object.entries(claims[u.id] || {}).filter(([, c]) => !c.synced).map(([key, c]) => ({ key, xp: c.xp }));
+    const s = analyze(u.id);
+    const data = await api(apiFor(u), "sync", { token: u.token, records: pending, claims: pc, stats: { xp: s.xp, level: s.level, medals: s.medals } });
+    applyServerData(u, data);
+    sync.error = ""; sync.lastOk = new Date();
+  } catch (e) {
+    if (e.code === "auth") { u.needLogin = true; saveUsers(); sync.error = e.message; }
+    else sync.error = "ส่งข้อมูลไม่สำเร็จ ผลยังเก็บไว้ในเครื่อง จะลองส่งใหม่อัตโนมัติ";
+  } finally {
+    sync.busy = false; renderSyncState(); refreshAll();
+  }
+}
+function applyServerData(u, data) {
+  if (data.profile) { u.name = data.profile.name || u.name; u.classCode = data.profile.classCode; u.no = data.profile.no; }
+  const all = loadRecords();
+  const serverIds = new Set((data.records || []).map((r) => String(r.id)));
+  const others = all.filter((r) => r.userId !== u.id);
+  const localOnly = all.filter((r) => r.userId === u.id && !r.synced && !serverIds.has(String(r.id)));
+  const fromServer = (data.records || []).map((r) => ({ ...r, id: String(r.id), userId: u.id, name: u.name, synced: true }));
+  saveRecords([...others, ...fromServer, ...localOnly]);
+  const cl = {};
+  (data.claims || []).forEach((c) => { cl[c.key] = { xp: c.xp, at: c.at, synced: true }; });
+  Object.entries(claims[u.id] || {}).forEach(([k, c]) => { if (!cl[k] && !c.synced) cl[k] = c; });
+  claims[u.id] = cl; saveClaims(); saveUsers();
+}
+window.addEventListener("online", () => scheduleSync(300));
+setInterval(() => { const u = me(); if (u && u.mode === "online" && !u.needLogin && pendingOf(u)) syncActive(); }, 60000);
+
+/* ---------- ส่วนแสดงผู้ฝึก ---------- */
+const AV_COLORS = ["#ff8a3d", "#4da3ff", "#22e39a", "#ffc53d", "#a98bff", "#ff6fae"];
+function avatarHtml(u, size = 40, dot = "") {
+  const name = (u && u.name) || "?";
+  const h = [...name].reduce((a, c) => a + c.codePointAt(0), 0);
+  const ch = [...name.replace(/^(ด\.ช\.|ด\.ญ\.|นาย|นางสาว|นาง|เด็กชาย|เด็กหญิง)\s*/, "")][0] || "?";
+  return `<span class="avatar" style="--size:${size}px; --av:${AV_COLORS[h % AV_COLORS.length]}">${esc(ch)}${dot ? `<span class="dot ${dot}"></span>` : ""}</span>`;
+}
+function syncDot(u) {
+  if (!u || u.mode !== "online") return "";
+  if (u.needLogin) return "err";
+  if (sync.busy) return "busy";
+  if (pendingOf(u)) return sync.error ? "err" : "pending";
+  return "ok";
+}
+function renderSyncState() {
+  const u = me();
+  const s = u ? analyze(u.id) : null;
+  $("acctBtn").innerHTML = u
+    ? `${avatarHtml(u, 36, syncDot(u))}<span class="who"><b>${esc(u.name)}</b><small>Lv.${s.level}${u.mode === "online" ? ` • ${esc(u.classCode)}` : ""}</small></span>`
+    : `<span class="avatar" style="--size:36px; --av:var(--card2); color:var(--muted)">${icon("star")}</span><span class="who"><b>เข้าสู่ระบบ</b><small>หรือใช้ในเครื่อง</small></span>`;
+  if (currentView === "me") renderMeSync();
+}
+
+/* =========================================================
+   เปลี่ยนหน้า
+   ========================================================= */
+const VIEWS = ["home", "plan", "workout", "rhythm", "test", "missions", "me"];
+const TITLES = { home: "หน้าแรก", plan: "แผนฝึก", workout: "ฝึกตามโปรแกรม", rhythm: "ฝึกตามจังหวะ", test: "ทดสอบแบบสนามแข่ง", missions: "ภารกิจ", me: "ฉัน" };
+const NAV_OF = { rhythm: "workout" };
+let currentView = null;
+function show(view) {
+  if (view === "stats") view = "me";
+  if (!VIEWS.includes(view)) view = "home";
+  if (currentView && currentView !== view) leaveView(currentView);
+  currentView = view;
+  VIEWS.forEach((v) => ($("view-" + v).hidden = v !== view));
+  const navView = NAV_OF[view] || view;
+  document.querySelectorAll(".nav-item").forEach((t) => {
+    if (t.dataset.view === navView) t.setAttribute("aria-current", "page"); else t.removeAttribute("aria-current");
+  });
+  document.querySelectorAll("[data-switch]").forEach((sw) => setPressed(sw, view));
+  $("topTitle").textContent = TITLES[view];
+  renderView();
+  window.scrollTo(0, 0);
+}
+function renderView() {
+  if (currentView === "home") renderHome();
+  if (currentView === "missions") renderMissions();
+  if (currentView === "me") renderMe();
+}
+function refreshAll() { refreshTop(); renderView(); }
+function leaveView(v) {
+  if (v === "workout" && wo.running) stopWorkout(true);
+  if (v === "test" && !["idle", "done"].includes(test.phase)) cancelTest();
+  if (v === "rhythm" && rh.running) stopRhythm();
+}
+const go = (v) => { if (location.hash !== "#" + v) location.hash = v; else show(v); };
+document.querySelectorAll(".nav-item").forEach((t) => t.addEventListener("click", () => go(t.dataset.view)));
+document.querySelectorAll("[data-switch]").forEach((sw) => sw.addEventListener("click", (e) => { const b = e.target.closest("[data-v]"); if (b) go(b.dataset.v); }));
+window.addEventListener("hashchange", () => show(location.hash.slice(1)));
+
+/* =========================================================
+   หน้า: แผนฝึก
+   ========================================================= */
+let planId = store.get("jr.plan", "beg");
+if (!PLANS.some((p) => p.id === planId)) planId = "beg";
+let planWeek = Number(store.get("jr.week", 0));
+if (!(planWeek >= 0 && planWeek <= 3)) planWeek = 0;
+const currentPlan = () => PLANS.find((x) => x.id === planId);
+const sessionOf = (p, wi) => ({ ...p.weeks[wi], title: `ระดับ${p.label} สัปดาห์ที่ ${wi + 1}` });
+
+$("levelSeg").innerHTML = PLANS.map((p) => `<button data-v="${p.id}">${p.label}<small>${p.who}</small></button>`).join("");
+chipGroup("levelSeg", planId, (v) => { planId = v; planWeek = 0; store.set("jr.plan", planId); store.set("jr.week", 0); renderPlan(); });
+
+function renderPlan() {
+  const p = currentPlan();
+  $("planInfo").textContent = `เป้าหมาย: ${p.goal}`;
+  $("weekCards").innerHTML = p.weeks.map((w, i) => {
+    const moves = [...new Set(w.moves)];
+    return `<div class="card week ${i === planWeek ? "current" : ""}">
+      <div class="row"><span class="wk">${i + 1}</span><span class="eyebrow">สัปดาห์${w.note ? " • " + w.note : ""}</span></div>
+      <div class="formula">${w.rounds} × ${w.work}<span> วิ ฝึก / ${w.rest} วิ พัก</span></div>
+      <span class="muted" style="font-size:.86rem">กระโดดรวม ${fmt(w.rounds * w.work)} นาที</span>
+      <ul>${moves.map((m) => `<li>${MOVE[m].name}</li>`).join("")}</ul>
+      <button class="btn ${i === planWeek ? "primary" : "ghost"}" data-week="${i}">ฝึกสัปดาห์นี้</button>
+    </div>`;
+  }).join("");
+}
+$("weekCards").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-week]"); if (!b) return;
+  planWeek = Number(b.dataset.week); store.set("jr.week", planWeek);
+  loadSession(sessionOf(currentPlan(), planWeek));
+  go("workout");
+});
+$("moveCards").innerHTML = MOVES.map((m) => `
+  <div class="card move">
+    <div class="move-head"><h3>${m.name}</h3>
+      <span class="bars" aria-label="ความยาก ${m.lv} จาก 5">${[1, 2, 3, 4, 5].map((n) => `<i class="${n <= m.lv ? "on" : ""}"></i>`).join("")}</span>
+    </div>
+    <span class="en">${m.en}</span>
+    <p>${m.tip}</p>
+  </div>`).join("");
+renderPlan();
+
+/* =========================================================
+   หน้า: ฝึกตามโปรแกรม (จับเวลาแบบช่วง ฝึก/พัก)
+   ========================================================= */
+$("cMove").innerHTML = `<option value="mix">สลับท่าพื้นฐาน</option>` + MOVES.map((m) => `<option value="${m.id}">${m.name}</option>`).join("");
+const wo = { session: null, queue: [], idx: 0, running: false, paused: false, endAt: 0, left: 0, startedAt: 0, workDone: 0, taps: 0, lastSec: -1, timer: null };
+const woMetro = makeMetronome(() => Number($("cBeat").value) || 100, null);
+const woMain = $("woMain");
+
+function loadSession(s) {
+  if (wo.running) stopWorkout(true);
+  wo.session = s;
+  const q = [{ phase: "ready", sec: 10 }];
+  for (let i = 0; i < s.rounds; i++) {
+    q.push({ phase: "work", sec: s.work, move: s.moves[i % s.moves.length], round: i + 1 });
+    if (i < s.rounds - 1 && s.rest > 0) q.push({ phase: "rest", sec: s.rest, round: i + 1 });
+  }
+  wo.queue = q; wo.idx = 0;
+  $("woTitle").textContent = s.title;
+  $("woSub").textContent = `${s.rounds} รอบ • ฝึก ${s.work} วิ • พัก ${s.rest} วิ • กระโดดรวม ${fmt(s.rounds * s.work)} นาที`;
+  $("cRounds").value = s.rounds; $("cWork").value = s.work; $("cRest").value = s.rest;
+  resetWorkoutDisplay();
+}
+function resetWorkoutDisplay() {
+  const first = wo.queue.find((x) => x.phase === "work");
+  $("woStage").dataset.phase = "idle";
+  $("woPhase").textContent = "พร้อมเริ่ม";
+  $("woTime").textContent = fmt(first ? first.sec : 0);
+  $("woMove").textContent = first ? MOVE[first.move].name : "—";
+  $("woTip").textContent = first ? MOVE[first.move].tip : "";
+  $("woRound").textContent = `รอบ 0/${wo.session.rounds}`;
+  $("woNext").textContent = "—";
+  $("woElapsed").textContent = "0:00";
+  setRing($("woRing"), 1);
+  wo.taps = 0; $("woTapCount").textContent = "0";
+  setMainBtn(woMain, "play", "เริ่มฝึก");
+}
+function enterPhase(i) {
+  wo.idx = i; const p = wo.queue[i];
+  wo.endAt = performance.now() + p.sec * 1000; wo.lastSec = -1;
+  $("woStage").dataset.phase = p.phase;
+  const nextWork = wo.queue.slice(i + 1).find((x) => x.phase === "work");
+  if (p.phase === "ready") {
+    $("woPhase").textContent = "เตรียมตัว";
+    const m = MOVE[wo.queue[1]?.move] || MOVES[0];
+    $("woMove").textContent = m.name; $("woTip").textContent = m.tip;
+    speak("เตรียมตัว ท่าแรก " + m.name);
+  } else if (p.phase === "work") {
+    $("woPhase").textContent = "ฝึก";
+    $("woMove").textContent = MOVE[p.move].name; $("woTip").textContent = MOVE[p.move].tip;
+    beep(1200, 0.35, 0.6); speak(MOVE[p.move].name);
+    if (Number($("cBeat").value) > 0) woMetro.start();
+  } else {
+    $("woPhase").textContent = "พัก";
+    const m = nextWork ? MOVE[nextWork.move] : null;
+    $("woMove").textContent = "พักหายใจ";
+    $("woTip").textContent = m ? `รอบถัดไป: ${m.name}` : "";
+    beep(500, 0.4, 0.6); speak(m ? "พัก รอบต่อไป " + m.name : "พัก");
+  }
+  $("woRound").textContent = `รอบ ${p.round || 0}/${wo.session.rounds}`;
+  $("woNext").textContent = nextWork ? MOVE[nextWork.move].name : "จบ";
+  $("woTap").disabled = p.phase !== "work";
+}
+function leavePhase() {
+  const p = wo.queue[wo.idx];
+  if (p && p.phase === "work") { woMetro.stop(); wo.workDone += p.sec - Math.max(0, wo.left); }
+}
+function woTick() {
+  if (!wo.running || wo.paused) return;
+  const now = performance.now();
+  const p = wo.queue[wo.idx];
+  wo.left = (wo.endAt - now) / 1000;
+  const sec = Math.ceil(wo.left);
+  $("woTime").textContent = fmt(sec);
+  setRing($("woRing"), wo.left / p.sec);
+  $("woElapsed").textContent = fmt((now - wo.startedAt) / 1000);
+  if (sec !== wo.lastSec && sec <= 3 && sec > 0) beep(800, 0.1, 0.5);
+  wo.lastSec = sec;
+  if (wo.left <= 0) {
+    wo.left = 0; leavePhase();
+    if (wo.idx + 1 < wo.queue.length) enterPhase(wo.idx + 1);
+    else finishWorkout();
+  }
+}
+function startWorkout() {
+  audio();
+  resetWorkoutDisplay();
+  wo.running = true; wo.paused = false; wo.workDone = 0; wo.startedAt = performance.now();
+  enterPhase(0);
+  wo.timer = setInterval(woTick, 100);
+  keepAwake(true);
+  setMainBtn(woMain, "pause", "พักชั่วคราว");
+  $("woSkip").disabled = false; $("woStop").disabled = false; $("cApply").disabled = true;
+}
+function togglePause() {
+  if (!wo.running) return;
+  if (!wo.paused) {
+    wo.paused = true; wo.left = (wo.endAt - performance.now()) / 1000; woMetro.stop();
+    setMainBtn(woMain, "play", "ฝึกต่อ"); $("woPhase").textContent = "หยุดชั่วคราว";
+  } else {
+    wo.paused = false; wo.endAt = performance.now() + wo.left * 1000;
+    const p = wo.queue[wo.idx];
+    if (p.phase === "work" && Number($("cBeat").value) > 0) woMetro.start();
+    setMainBtn(woMain, "pause", "พักชั่วคราว");
+    $("woPhase").textContent = p.phase === "work" ? "ฝึก" : p.phase === "rest" ? "พัก" : "เตรียมตัว";
+  }
+}
+function skipPhase() {
+  if (!wo.running) return;
+  wo.left = (wo.endAt - performance.now()) / 1000;
+  if (wo.paused) togglePause();
+  leavePhase();
+  if (wo.idx + 1 < wo.queue.length) enterPhase(wo.idx + 1); else finishWorkout();
+}
+function endWorkoutUI() {
+  clearInterval(wo.timer); woMetro.stop(); keepAwake(false);
+  wo.running = false; wo.paused = false;
+  setMainBtn(woMain, "play", "เริ่มฝึก");
+  $("woSkip").disabled = true; $("woStop").disabled = true; $("woTap").disabled = true; $("cApply").disabled = false;
+}
+function finishWorkout() {
+  endWorkoutUI();
+  $("woStage").dataset.phase = "done";
+  $("woPhase").textContent = "ครบโปรแกรมแล้ว เก่งมาก";
+  $("woTime").textContent = fmt(wo.workDone);
+  $("woRound").textContent = "เวลากระโดดรวม";
+  $("woMove").textContent = "อย่าลืมยืดเหยียดกล้ามเนื้อ";
+  $("woTip").textContent = "";
+  setRing($("woRing"), 1);
+  beep(400, 0.8, 0.6); speak("ครบโปรแกรมแล้ว เก่งมาก");
+  recordWorkout(true);
+}
+function stopWorkout(silent) {
+  if (!wo.running) return;
+  wo.left = (wo.endAt - performance.now()) / 1000;
+  leavePhase(); endWorkoutUI();
+  if (wo.workDone >= 20) recordWorkout(false);
+  $("woStage").dataset.phase = "idle";
+  $("woPhase").textContent = "หยุดฝึกแล้ว";
+  if (!silent) toast(wo.workDone >= 20 ? "บันทึกการฝึกแล้ว" : "ฝึกน้อยกว่า 20 วินาที จึงไม่บันทึก");
+}
+function recordWorkout(complete) {
+  const s = wo.session;
+  const roundsDone = wo.queue.slice(0, wo.idx + 1).filter((x) => x.phase === "work").length;
+  saveRecord({
+    type: "workout",
+    detail: s.title + (complete ? "" : " (ไม่ครบ)"),
+    result: `${Math.min(roundsDone, s.rounds)}/${s.rounds} รอบ • กระโดด ${fmt(wo.workDone)}${wo.taps ? ` • ${wo.taps} ครั้ง` : ""}`,
+    value: Math.round(wo.workDone), seconds: Math.round(wo.workDone), jumps: wo.taps
+  });
+}
+function woCountTap() {
+  if (wo.running && !wo.paused && wo.queue[wo.idx].phase === "work") { wo.taps++; $("woTapCount").textContent = wo.taps; }
+}
+woMain.addEventListener("click", () => { if (!wo.running) startWorkout(); else togglePause(); });
+$("woSkip").addEventListener("click", skipPhase);
+$("woStop").addEventListener("click", () => stopWorkout(false));
+$("woTap").addEventListener("pointerdown", (e) => { e.preventDefault(); woCountTap(); });
+$("cApply").addEventListener("click", () => {
+  const rounds = Math.min(40, Math.max(1, Number($("cRounds").value) || 1));
+  const work = Math.min(600, Math.max(5, Number($("cWork").value) || 30));
+  const rest = Math.min(300, Math.max(0, Number($("cRest").value) || 0));
+  const mv = $("cMove").value;
+  loadSession({ rounds, work, rest, moves: mv === "mix" ? ["basic", "alt", "boxer", "side"] : [mv], title: "โปรแกรมที่ตั้งเอง" });
+  toast("ตั้งค่าแล้ว กดปุ่มเริ่มได้เลย");
+});
+loadSession(sessionOf(currentPlan(), planWeek));
+
+/* =========================================================
+   หน้า: ทดสอบนับครั้ง แบบสนามแข่ง (SRSS 30 วิ / SRSE 3 นาที)
+   ========================================================= */
+let savedDur = Number(store.get("jr.tdur", 30));
+if (!EVENTS[savedDur]) savedDur = 30;
+let savedMethod = store.get("jr.tmethod", "tap");
+if (!["tap", "cam"].includes(savedMethod)) savedMethod = "tap";
+
+const test = { dur: savedDur, method: savedMethod, phase: "idle", count: 0, pre: 0, timer: null, t0: 0, synthIds: [], stopId: null };
+const tAudio = new Audio();
+tAudio.preload = "auto";
+const aud = { token: 0, ready: false, synth: false, blobUrl: null };
+const SYNTH_INTRO = 4;
+setMainBtn($("tStart"), "play", "เริ่มทดสอบ");
+
+function setAudioLabel(msg) { $("tAudioState").textContent = msg; }
+function prepareAudio() {
+  const ev = EVENTS[test.dur]; const token = ++aud.token;
+  aud.ready = false; aud.synth = false;
+  $("tStart").disabled = true;
+  setAudioLabel("กำลังเตรียมเสียงสัญญาณ...");
+  const urls = ev.files.map((f) => encodeURI(f));
+  let i = 0, fetched = false;
+  const markReady = () => {
+    if (token !== aud.token || aud.ready) return;
+    aud.ready = true; $("tStart").disabled = test.phase !== "idle" && test.phase !== "done";
+    setAudioLabel(`เสียงสัญญาณ ${ev.code} พร้อม`);
+  };
+  const useSynth = () => {
+    if (token !== aud.token) return;
+    aud.synth = true; aud.ready = true; $("tStart").disabled = false;
+    setAudioLabel("ไม่พบไฟล์เสียงแข่ง ใช้เสียง Beep สังเคราะห์แทน");
+  };
+  const tryNext = async () => {
+    if (token !== aud.token) return;
+    if (i < urls.length) { tAudio.src = urls[i++]; tAudio.load(); return; }
+    if (fetched) { useSynth(); return; }
+    fetched = true;
+    for (const u of urls) {
+      try {
+        const r = await fetch(u); if (!r.ok) continue;
+        const b = await r.blob(); if (token !== aud.token) return;
+        if (aud.blobUrl) URL.revokeObjectURL(aud.blobUrl);
+        aud.blobUrl = URL.createObjectURL(b);
+        tAudio.src = aud.blobUrl; tAudio.load(); return;
+      } catch {}
+    }
+    useSynth();
+  };
+  tAudio.onerror = tryNext;
+  tAudio.oncanplaythrough = markReady;
+  tAudio.onloadeddata = markReady;
+  tryNext();
+}
+function eventTimes() {
+  const ev = EVENTS[test.dur];
+  return aud.synth ? { start: SYNTH_INTRO, end: SYNTH_INTRO + test.dur } : { start: ev.start, end: ev.end };
+}
+function trackTime() { return aud.synth ? (performance.now() - test.t0) / 1000 : tAudio.currentTime; }
+function renderRules() {
+  const ev = EVENTS[test.dur];
+  $("tRuleTitle").textContent = `กติกา ${ev.code} ${ev.th}`;
+  $("tRules").innerHTML = [
+    `ใช้ท่า Speed Step / Jogging Step (สลับเท้า) เท่านั้น`,
+    `นับเฉพาะเท้าขวาที่แตะพื้นโดยไม่สะดุดเชือก`,
+    `เริ่มกระโดดก่อนเสียง Beep หัก 10 คะแนนจากคะแนนรวม`,
+    `สะดุดเชือกให้กระโดดต่อจนกว่าจะได้ยินเสียงหยุด`,
+    `สนามสปีด 5 × 5 เมตร เหยียบเส้นหรือออกนอกเขต กรรมการหยุดนับจนกว่าจะกลับเข้าเขต`,
+    `แข่งจริงใช้กรรมการ 3 คนนับ แล้วหาค่าเฉลี่ย`
+  ].map((t) => `<li>${t}</li>`).join("");
+  $("tCues").innerHTML = ev.cues.map((c) => `<li class="${c === "Beep" ? "beep" : ""}">${esc(c)}</li>`).join("");
+}
+function setTStatus(msg, color) { $("tStatus").textContent = msg; $("tStatus").style.color = color ? `var(${color})` : ""; }
+function setCount(n) { test.count = n; $("tCount").textContent = n; }
+function setPhase(p) { test.phase = p; $("tStage").dataset.phase = p; }
+function lockTestOptions(lock) { $("tDur").dataset.locked = lock ? "1" : "0"; $("tMethod").dataset.locked = lock ? "1" : "0"; }
+function syncTestMethod() { const cam = test.method === "cam"; $("tTap").hidden = cam; $("tCamBox").hidden = !cam; }
+function resetTestDisplay() { setCount(0); $("tTime").textContent = fmt(test.dur); $("tTimeLabel").textContent = "เวลา"; setRing($("tRing"), 1); }
+function setTestDur(d) {
+  if (!EVENTS[d] || !["idle", "done"].includes(test.phase)) return;
+  const changed = d !== test.dur;
+  test.dur = d; store.set("jr.tdur", d); setPressed($("tDur"), d);
+  resetTestDisplay(); renderRules();
+  if (changed || !aud.ready) prepareAudio();
+}
+chipGroup("tDur", test.dur, (v) => setTestDur(Number(v)));
+chipGroup("tMethod", test.method, (v) => { test.method = v; store.set("jr.tmethod", v); syncTestMethod(); });
+syncTestMethod(); resetTestDisplay(); renderRules(); prepareAudio();
+
+function primeAudio() {
+  if (aud.synth) return;
+  try {
+    tAudio.muted = true;
+    const p = tAudio.play();
+    if (p) p.then(() => { if (test.phase !== "intro" && test.phase !== "go") { tAudio.pause(); tAudio.currentTime = 0; } tAudio.muted = false; })
+            .catch(() => { tAudio.muted = false; });
+  } catch { tAudio.muted = false; }
+}
+async function startTest() {
+  audio();
+  $("tResult").hidden = true; $("tCamNote").hidden = true;
+  resetTestDisplay(); test.pre = 0;
+  lockTestOptions(true);
+  $("tStart").disabled = true; $("tCancel").disabled = false;
+  keepAwake(true);
+  if (test.method === "tap") {
+    playTrack();
+  } else {
+    primeAudio();
+    setPhase("camera");
+    const ok = await startCamera();
+    if (!ok) { cancelTest(); return; }
+    setPhase("calib");
+  }
+}
+function scheduleSynth() {
+  const at = (sec, fn) => test.synthIds.push(setTimeout(fn, sec * 1000));
+  [1, 2, 3].forEach((s) => at(s, () => beep(700, 0.1, 0.5)));
+  at(SYNTH_INTRO, () => beep(1000, 0.35, 0.7));
+  const step = test.dur === 30 ? 10 : 15;
+  for (let s = step; s < test.dur; s += step) at(SYNTH_INTRO + s, () => beep(880, 0.08, 0.4));
+  at(SYNTH_INTRO + test.dur, () => beep(1000, 0.35, 0.7));
+}
+async function playTrack() {
+  setPhase("intro"); test.pre = 0;
+  $("tTap").disabled = test.method !== "tap";
+  if (aud.synth) {
+    test.t0 = performance.now(); scheduleSynth();
+  } else {
+    try {
+      tAudio.muted = false; tAudio.volume = Number($("tVol").value);
+      tAudio.currentTime = 0;
+      await tAudio.play();
+    } catch {
+      setPhase("needplay"); $("tPlay").hidden = false; $("tTap").disabled = true;
+      setTStatus("กดปุ่มเล่นเสียงสัญญาณ", "--warn");
+      return;
+    }
+  }
+  $("tPlay").hidden = true;
+  clearInterval(test.timer);
+  test.timer = setInterval(tTick, 40);
+  tTick();
+}
+function tTick() {
+  const t = trackTime(); const { start, end } = eventTimes();
+  if (test.phase === "intro") {
+    const toGo = start - t;
+    $("tTimeLabel").textContent = "Beep เริ่มในอีก";
+    $("tTime").textContent = `${Math.max(0, Math.ceil(toGo))} วิ`;
+    setRing($("tRing"), Math.max(0, toGo) / start);
+    if (test.pre === 0) setTStatus(toGo > 3 ? "ฟังสัญญาณ เตรียมพร้อม" : "Set... รอเสียง Beep");
+    if (t >= start) {
+      setPhase("go");
+      $("tTimeLabel").textContent = "เวลาที่เหลือ";
+      setTStatus("เริ่ม! กระโดดเลย", "--go");
+    }
+  }
+  if (test.phase === "go") {
+    const left = end - t;
+    $("tTime").textContent = fmt(Math.ceil(left));
+    setRing($("tRing"), left / test.dur);
+    if (left <= 0) finishTest();
+  }
+}
+function addCount() {
+  if (test.phase === "go") setCount(test.count + 1);
+  else if (test.phase === "intro") { test.pre++; setTStatus("ออกตัวก่อนเสียง Beep!", "--bad"); }
+}
+function finishTest() {
+  clearInterval(test.timer); setPhase("done");
+  $("tTimeLabel").textContent = "เวลา"; $("tTime").textContent = "0:00"; setRing($("tRing"), 1);
+  setTStatus(`ครบเวลา ได้ ${test.count} ครั้ง`, "--go");
+  $("tTap").disabled = true;
+  if (!aud.synth) { clearTimeout(test.stopId); test.stopId = setTimeout(() => tAudio.pause(), 1500); }
+  stopCamera(); keepAwake(false); lockTestOptions(false);
+  $("tStart").disabled = false; $("tCancel").disabled = true;
+  const ev = EVENTS[test.dur];
+  const falseStart = test.method === "tap" ? test.pre >= 1 : test.pre >= 2;
+  $("tFinal").value = test.count; $("tFinalDur").textContent = ev.label;
+  $("tFalse").checked = falseStart;
+  updateNet();
+  $("tResult").hidden = false;
+  $("tResult").scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+const netScore = () => Math.max(0, Math.round(Number($("tFinal").value) || 0) - ($("tFalse").checked ? 10 : 0));
+function updateNet() {
+  const net = netScore();
+  $("tNet").textContent = net;
+  const prev = myRecords().filter((r) => isTest(r) && secOf(r) === test.dur).map((r) => r.value);
+  const best = prev.length ? Math.max(...prev) : null;
+  const ev = EVENTS[test.dur];
+  $("tCompare").className = "pill" + (best === null || net > best ? " up" : "");
+  $("tCompare").textContent = best === null ? `ผลครั้งแรกของ ${ev.code}` : net > best ? `ทำลายสถิติเดิม ${best}!` : `สถิติดีที่สุด ${best}`;
+}
+$("tFinal").addEventListener("input", updateNet);
+$("tFalse").addEventListener("change", updateNet);
+function cancelTest() {
+  clearInterval(test.timer);
+  test.synthIds.forEach(clearTimeout); test.synthIds = [];
+  try { tAudio.pause(); tAudio.currentTime = 0; } catch {}
+  setPhase("idle"); stopCamera(); keepAwake(false); lockTestOptions(false);
+  $("tStart").disabled = !aud.ready; $("tCancel").disabled = true; $("tTap").disabled = true; $("tPlay").hidden = true;
+  resetTestDisplay();
+  setTStatus("ยกเลิกแล้ว");
+}
+$("tStart").addEventListener("click", startTest);
+$("tCancel").addEventListener("click", cancelTest);
+$("tPlay").addEventListener("click", () => playTrack());
+$("tVol").addEventListener("input", () => { tAudio.volume = Number($("tVol").value); });
+$("tTap").addEventListener("pointerdown", (e) => { e.preventDefault(); addCount(); });
+$("tSave").addEventListener("click", () => {
+  const ev = EVENTS[test.dur];
+  const n = netScore(); const fs = $("tFalse").checked;
+  const label = test.method === "tap" ? "แตะนับ" : "กล้อง";
+  saveRecord({
+    type: "test", detail: `${ev.code} ${ev.label} • ${label}${fs ? " • ออกตัวก่อน −10" : ""}`,
+    result: `${n} ครั้ง`, value: n, seconds: test.dur, method: test.method, falseStart: fs
+  });
+  $("tResult").hidden = true; setTStatus("บันทึกผลแล้ว", "--go"); toast("บันทึกผลแล้ว");
+});
+$("tDiscard").addEventListener("click", () => { $("tResult").hidden = true; setTStatus("ไม่ได้บันทึกผลนี้"); });
+
+/* ---------- กล้อง + MediaPipe: นับเท้าขวาแบบ Speed Step ---------- */
+const CALIB_SEC = 5, VIS_MIN = 0.5, SMOOTH = 4, L_ANK = 27, R_ANK = 28;
+const ALT = { lift: 0.025, land: 0.012, diff: 0.015, leftGround: 0.025, gap: 180 };
+const cam = { mp: null, landmarker: null, draw: null, stream: null, raf: null, on: false,
+  baseL: null, baseR: null, calL: [], calR: [], hL: [], hR: [], state: "GROUND", last: 0, calStart: 0 };
+const video = $("tVideo"), canvas = $("tCanvas"), ctx2d = canvas.getContext("2d");
+
+async function loadModel() {
+  if (cam.landmarker) return;
+  setTStatus("กำลังโหลดตัวตรวจจับร่างกาย...");
+  const mp = await import("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/+esm");
+  const vision = await mp.FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm");
+  cam.landmarker = await mp.PoseLandmarker.createFromOptions(vision, {
+    baseOptions: { modelAssetPath: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task", delegate: "GPU" },
+    runningMode: "VIDEO", numPoses: 1, minPoseDetectionConfidence: 0.6, minPosePresenceConfidence: 0.6, minTrackingConfidence: 0.6
+  });
+  cam.mp = mp; cam.draw = new mp.DrawingUtils(ctx2d);
+}
+async function startCamera() {
+  try {
+    await loadModel();
+    setTStatus("กำลังขอสิทธิ์ใช้กล้อง...");
+    cam.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 960 }, height: { ideal: 720 } }, audio: false });
+    video.srcObject = cam.stream;
+    await new Promise((r) => (video.readyState >= 1 ? r() : (video.onloadedmetadata = r)));
+    await video.play();
+    canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+    cam.on = true; resetCalibration();
+    loop();
+    return true;
+  } catch (err) {
+    console.warn(err); stopCamera();
+    $("tCamNote").hidden = false;
+    $("tCamNote").textContent = "เปิดกล้องหรือโหลดตัวตรวจจับไม่ได้ ในบางหน้าเว็บ (เช่นหน้าที่ฝังอยู่ในแอปอื่น) กล้องจะถูกปิดไว้ ให้ใช้แบบแตะนับ หรือเปิดโปรแกรมนี้จากเว็บไซต์ที่เป็น https แล้วอนุญาตกล้อง";
+    toast("ใช้กล้องไม่ได้ เปลี่ยนเป็นแตะนับ");
+    test.method = "tap"; store.set("jr.tmethod", "tap"); setPressed($("tMethod"), "tap"); syncTestMethod();
+    return false;
+  }
+}
+function stopCamera() {
+  cam.on = false;
+  if (cam.raf) cancelAnimationFrame(cam.raf); cam.raf = null;
+  if (cam.stream) cam.stream.getTracks().forEach((t) => t.stop()); cam.stream = null;
+  video.srcObject = null;
+}
+function resetCalibration() {
+  cam.baseL = cam.baseR = null; cam.calL = []; cam.calR = []; cam.hL = []; cam.hR = [];
+  cam.state = "GROUND"; cam.calStart = performance.now();
+}
+const avg = (h, v) => { h.push(v); if (h.length > SMOOTH) h.shift(); return h.reduce((a, b) => a + b, 0) / h.length; };
+const visible = (lm) => (lm.visibility ?? 1) >= VIS_MIN && (lm.presence ?? 1) >= VIS_MIN;
+const median = (a) => { const s = [...a].sort((x, y) => x - y); const m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
+function processFeet(lms, now) {
+  const L = lms[L_ANK], R = lms[R_ANK];
+  if (!visible(L) || !visible(R)) { if (test.phase === "calib") setTStatus("ให้กล้องเห็นข้อเท้าทั้งสองข้าง", "--bad"); return; }
+  const sL = avg(cam.hL, L.y), sR = avg(cam.hR, R.y);
+  if (test.phase === "calib") {
+    cam.calL.push(sL); cam.calR.push(sR);
+    const el = (now - cam.calStart) / 1000;
+    setTStatus(`ยืนนิ่ง ${Math.max(0, CALIB_SEC - el).toFixed(1)} วิ`);
+    if (el >= CALIB_SEC) {
+      if (cam.calL.length >= 15) { cam.baseL = median(cam.calL); cam.baseR = median(cam.calR); playTrack(); }
+      else { resetCalibration(); setTStatus("ยังเห็นข้อเท้าไม่ชัด เริ่มยืนนิ่งใหม่", "--bad"); }
+    }
+    return;
+  }
+  if (test.phase !== "intro" && test.phase !== "go") return;
+  const liftL = cam.baseL - sL, liftR = cam.baseR - sR;
+  if (cam.state === "GROUND") {
+    if (liftR > ALT.lift && sR < sL - ALT.diff && liftL < ALT.leftGround) cam.state = "UP";
+  } else if (liftR < ALT.land) {
+    if (now - cam.last >= ALT.gap) { addCount(); cam.last = now; }
+    cam.state = "GROUND";
+  }
+}
+function drawFrame(res) {
+  ctx2d.save();
+  ctx2d.clearRect(0, 0, canvas.width, canvas.height);
+  ctx2d.translate(canvas.width, 0); ctx2d.scale(-1, 1);
+  ctx2d.drawImage(video, 0, 0, canvas.width, canvas.height);
+  if (res.landmarks.length) {
+    const lm = res.landmarks[0];
+    cam.draw.drawConnectors(lm, cam.mp.PoseLandmarker.POSE_CONNECTIONS, { color: "#4da3ff", lineWidth: 3 });
+    cam.draw.drawLandmarks(lm, { color: "#ffffff", fillColor: "#1f6fd1", radius: 3 });
+    [[L_ANK, "#22e39a"], [R_ANK, "#ff6b1f"]].forEach(([i, c]) => {
+      ctx2d.beginPath(); ctx2d.arc(lm[i].x * canvas.width, lm[i].y * canvas.height, 11, 0, Math.PI * 2);
+      ctx2d.fillStyle = c; ctx2d.fill(); ctx2d.lineWidth = 3; ctx2d.strokeStyle = "#fff"; ctx2d.stroke();
+    });
+  }
+  ctx2d.restore();
+}
+function loop() {
+  if (!cam.on) return;
+  if (video.readyState >= 2) {
+    const now = performance.now();
+    cam.landmarker.detectForVideo(video, now, (res) => {
+      drawFrame(res);
+      if (res.landmarks.length) processFeet(res.landmarks[0], now);
+      else if (test.phase === "calib") setTStatus("ไม่พบคนในภาพ ยืนให้เห็นเต็มตัว", "--bad");
+    });
+  }
+  cam.raf = requestAnimationFrame(loop);
+}
+
+/* =========================================================
+   หน้า: ฝึกตามจังหวะ (2 จังหวะ ซ้าย-ขวา, 15 ระดับ, ไม่บันทึกสถิติ)
+   ========================================================= */
+let startLevel = Number(store.get("jr.rlevel", 1));
+if (!(startLevel >= 1 && startLevel <= LEVEL_COUNT)) startLevel = 1;
+const rh = { level: startLevel, running: false, start: 0, beats: 0, timer: null };
+const rMain = $("rMain");
+const rMetro = makeMetronome(() => LEVELS[rh.level - 1].bpm, (first) => {
+  if (!rh.running) return;
+  rh.beats++; $("rBeats").textContent = rh.beats;
+  const el = first ? $("footL") : $("footR");
+  el.classList.add("on");
+  setTimeout(() => el.classList.remove("on"), Math.min(120, 30000 / LEVELS[rh.level - 1].bpm));
+});
+$("rLevels").innerHTML = LEVELS.map((l) => `<button data-lv="${l.lv}"><b>Lv.${l.lv}</b><small>${l.bpm}</small></button>`).join("");
+function setLevel(lv) {
+  rh.level = Math.min(LEVEL_COUNT, Math.max(1, lv));
+  store.set("jr.rlevel", rh.level);
+  const bpm = LEVELS[rh.level - 1].bpm;
+  document.querySelectorAll("#rLevels button").forEach((b) => b.setAttribute("aria-pressed", String(Number(b.dataset.lv) === rh.level)));
+  $("rLvBig").textContent = `Lv.${rh.level}`;
+  $("rBpmBig").textContent = `${bpm} BPM`;
+  $("rEquiv").textContent = `ถ้าทันจังหวะนี้ เท่ากับเท้าขวาประมาณ ${Math.round(bpm / 4)} ครั้งใน 30 วินาที (SRSS) หรือ ${Math.round(bpm * 1.5)} ครั้งใน 3 นาที (SRSE)`;
+  $("rDown").disabled = rh.level === 1; $("rUp").disabled = rh.level === LEVEL_COUNT;
+  if (rh.running) $("rStatus").textContent = `กำลังฝึก Lv.${rh.level}`;
+}
+$("rLevels").addEventListener("click", (e) => { const b = e.target.closest("[data-lv]"); if (b) setLevel(Number(b.dataset.lv)); });
+$("rDown").addEventListener("click", () => setLevel(rh.level - 1));
+$("rUp").addEventListener("click", () => setLevel(rh.level + 1));
+setLevel(rh.level);
+setMainBtn(rMain, "play", "เริ่ม");
+function startRhythm() {
+  audio();
+  rh.running = true; rh.beats = 0; rh.start = performance.now();
+  $("rBeats").textContent = "0"; $("rTime").textContent = "0:00";
+  rMetro.start(); keepAwake(true);
+  setMainBtn(rMain, "stop", "หยุด");
+  $("rStatus").textContent = `กำลังฝึก Lv.${rh.level}`;
+  rh.timer = setInterval(() => { $("rTime").textContent = fmt((performance.now() - rh.start) / 1000); }, 250);
+}
+function stopRhythm() {
+  if (!rh.running) return;
+  rh.running = false; rMetro.stop(); clearInterval(rh.timer); keepAwake(false);
+  $("footL").classList.remove("on"); $("footR").classList.remove("on");
+  setMainBtn(rMain, "play", "เริ่ม");
+  $("rStatus").textContent = `หยุดแล้ว ฝึกไป ${fmt((performance.now() - rh.start) / 1000)} จบที่ Lv.${rh.level}`;
+}
+rMain.addEventListener("click", () => (rh.running ? stopRhythm() : startRhythm()));
+
+/* ---------- คีย์บอร์ด ---------- */
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") { if (!$("acct").hidden) closeAccount(); else if (!$("celebrate").hidden) nextCeleb(); return; }
+  if (e.target.matches("input, select, textarea") || !$("acct").hidden || !$("celebrate").hidden) return;
+  if (currentView === "rhythm" && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
+    e.preventDefault(); setLevel(rh.level + (e.key === "ArrowUp" ? 1 : -1)); return;
+  }
+  if (e.code !== "Space" && e.code !== "Enter") return;
+  if (currentView === "test" && test.method === "tap" && (test.phase === "go" || test.phase === "intro")) { e.preventDefault(); addCount(); }
+  else if (currentView === "workout" && wo.running && !wo.paused && wo.queue[wo.idx].phase === "work") { e.preventDefault(); woCountTap(); }
+});
+
+/* =========================================================
+   หน้าแรก
+   ========================================================= */
+function renderComp() {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const s = new Date(COMPETITION.start + "T00:00:00"), e = new Date(COMPETITION.end + "T00:00:00");
+  if (today > e) { $("hComp").hidden = true; return; }
+  const days = Math.round((s - today) / 86400000);
+  $("hComp").hidden = false;
+  $("hCompName").textContent = COMPETITION.name;
+  $("hCompMeta").textContent = `${COMPETITION.dateLabel} • ${COMPETITION.place}`;
+  $("hCompDays").textContent = days > 0 ? days : "วันนี้";
+  $("hCompUnit").textContent = days > 0 ? "วัน" : "สู้ๆ!";
+}
+function renderSpark(recs) {
+  const data = recs.filter((r) => isTest(r) && secOf(r) === 30).slice(-10);
+  const trend = $("hTrend");
+  if (data.length < 2) {
+    trend.hidden = true;
+    $("hSpark").innerHTML = `<div class="empty">ทดสอบ SRSS อย่างน้อย 2 ครั้งเพื่อดูกราฟพัฒนาการ</div>`;
+    return;
+  }
+  const W = 320, H = 96, px = 14, pt = 22, pb = 18;
+  const vals = data.map((d) => d.value);
+  const lo = Math.min(...vals), hi = Math.max(...vals), span = Math.max(1, hi - lo);
+  const x = (i) => px + (W - 2 * px) * (i / (data.length - 1));
+  const y = (v) => pt + (H - pt - pb) * (1 - (v - lo) / span);
+  const pts = data.map((d, i) => `${x(i).toFixed(1)},${y(d.value).toFixed(1)}`);
+  const last = data[data.length - 1];
+  const area = `M${x(0)},${H - pb} L${pts.join(" L")} L${x(data.length - 1)},${H - pb} Z`;
+  const d0 = new Date(data[0].date), d1 = new Date(last.date);
+  $("hSpark").innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="กราฟผล SRSS ล่าสุด ${data.length} ครั้ง">
+    <path class="area" d="${area}"/><polyline class="line" points="${pts.join(" ")}"/>
+    <circle class="dot" cx="${x(data.length - 1)}" cy="${y(last.value)}" r="5"/>
+    <text class="lbl" x="${x(data.length - 1)}" y="${y(last.value) - 10}" text-anchor="end">${last.value}</text>
+    <text class="ax" x="${px}" y="${H - 3}">${d0.getDate()}/${d0.getMonth() + 1}</text>
+    <text class="ax" x="${W - px}" y="${H - 3}" text-anchor="end">${d1.getDate()}/${d1.getMonth() + 1}</text>
+  </svg>`;
+  const diff = last.value - data[0].value;
+  trend.hidden = false;
+  trend.className = "pill" + (diff > 0 ? " up" : "");
+  trend.textContent = diff > 0 ? `+${diff} ครั้ง` : diff === 0 ? "เท่าเดิม" : `${diff} ครั้ง`;
+}
+function renderHome() {
+  const u = me();
+  const s = analyze(activeId);
+  $("hName").textContent = u ? u.name : "ยินดีต้อนรับ";
+  $("hHello").textContent = u ? (u.mode === "online" ? `ห้อง ${u.classCode} เลขที่ ${u.no}` : "สวัสดี พร้อมฝึกหรือยัง") : "โปรแกรมฝึกกระโดดเชือก";
+  $("hRankWrap").hidden = !u; $("hWelcome").hidden = !!u; document.querySelector(".hero-streak").hidden = !u;
+  $("hLevel").textContent = `Lv.${s.level}`; $("hRank").textContent = rankOf(s.level);
+  $("hXp").textContent = `${s.into}/${s.need} XP`; $("hXpBar").style.width = `${(s.into / s.need) * 100}%`;
+  $("hStreak").textContent = s.streak;
+  const today = dayKey(new Date());
+  $("hToday").textContent = s.recs.filter((r) => dayKey(r.date) === today).length;
+  $("hBest30").textContent = s.b30 ?? "—";
+  $("hBest180").textContent = s.b180 ?? "—";
+  const daily = missionsFor(activeId, s).filter((m) => m.kind === "d");
+  const done = daily.filter((m) => m.done).length, ready = daily.filter((m) => m.done && !m.claimed).length;
+  $("hMisCount").textContent = `${done}/${daily.length}`;
+  $("hMisRing").style.strokeDashoffset = String(150.8 * (1 - done / daily.length));
+  $("hMisTitle").textContent = ready ? `รับรางวัลได้ ${ready} ภารกิจ` : done === daily.length ? "ทำภารกิจวันนี้ครบแล้ว" : "ทำภารกิจให้ครบรับ XP";
+  $("hMisSub").textContent = daily.filter((m) => !m.done).map((m) => m.name).slice(0, 2).join(" • ") || "กลับมาพรุ่งนี้มีภารกิจใหม่";
+  const p = currentPlan(), w = p.weeks[planWeek];
+  $("qPlan").textContent = `ระดับ${p.label} สัปดาห์ที่ ${planWeek + 1}`;
+  $("qPlanSub").textContent = `${w.rounds} × ${w.work} วิ ฝึก / ${w.rest} วิ พัก`;
+  $("qRhythm").textContent = `Lv.${rh.level} • ${LEVELS[rh.level - 1].bpm} BPM`;
+  renderComp(); renderSpark(s.recs);
+}
+$("quick").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-go]"); if (!b) return;
+  if (b.dataset.go === "workout") loadSession(sessionOf(currentPlan(), planWeek));
+  if (b.dataset.dur) setTestDur(Number(b.dataset.dur));
+  go(b.dataset.go);
+});
+$("hMissions").addEventListener("click", () => go("missions"));
+
+function refreshTop() {
+  const s = analyze(activeId);
+  $("topStreak").textContent = s.streak;
+  const ready = activeId ? missionsFor(activeId, s).filter((m) => m.done && !m.claimed).length : 0;
+  $("navBadge").hidden = !ready; $("navBadge").textContent = ready;
+  renderSyncState();
+}
+
+/* =========================================================
+   หน้า: ภารกิจ
+   ========================================================= */
+function missionHtml(m) {
+  const right = m.claimed
+    ? `<span class="claimed-tag">${icon("check")} รับแล้ว</span>`
+    : `<div><button class="btn ${m.done ? "go" : "ghost"} sm" data-claim="${esc(m.key)}" ${m.done ? "" : "disabled"}>${m.done ? `รับ +${m.xp} XP` : `+${m.xp} XP`}</button></div>`;
+  return `<div class="mission ${m.done ? "done" : ""} ${m.claimed ? "claimed" : ""}">
+    <span class="ico ${m.c}">${icon(m.icon)}</span>
+    <div><div class="m-name">${esc(m.name)}</div>
+      <div class="m-prog"><div class="xpbar ${m.done ? "green" : ""}"><i style="width:${(m.prog / m.target) * 100}%"></i></div><span class="num">${m.prog}/${m.target}${m.unit ? " " + m.unit : ""}</span></div>
+    </div>
+    ${right}
+  </div>`;
+}
+function renderMissions() {
+  const s = analyze(activeId);
+  const ms = missionsFor(activeId, s);
+  $("mLevel").textContent = `Lv.${s.level} ${rankOf(s.level)}`;
+  $("mXpBar").style.width = `${(s.into / s.need) * 100}%`;
+  $("mXpText").textContent = `${s.into}/${s.need} XP ถึงเลเวลถัดไป • XP รวม ${s.xp}`;
+  const ready = ms.filter((m) => m.done && !m.claimed).length;
+  $("mClaimable").hidden = !ready; $("mClaimable").textContent = `รับรางวัลได้ ${ready}`;
+  $("mDaily").innerHTML = ms.filter((m) => m.kind === "d").map(missionHtml).join("");
+  $("mWeekly").innerHTML = ms.filter((m) => m.kind === "w").map(missionHtml).join("");
+  const nextMon = periodStart("w"); nextMon.setDate(nextMon.getDate() + 7);
+  $("mWeeklyReset").textContent = `รีเซ็ต ${nextMon.toLocaleDateString("th-TH", { weekday: "short", day: "numeric", month: "short" })}`;
+}
+$("view-missions").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-claim]"); if (!b || b.disabled) return;
+  const key = b.dataset.claim;
+  const m = missionsFor(activeId).find((x) => x.key === key);
+  if (!m || !m.done || m.claimed) return;
+  withProgress(() => {
+    claims[activeId] = claims[activeId] || {};
+    claims[activeId][key] = { xp: m.xp, at: new Date().toISOString(), synced: false };
+    saveClaims();
+  });
+  toast(`ได้รับ +${m.xp} XP`);
+  scheduleSync();
+});
+
+/* =========================================================
+   หน้า: ฉัน (โปรไฟล์ สถิติ เหรียญ)
+   ========================================================= */
+let sDur = 30;
+chipGroup("sDur", sDur, (v) => { sDur = Number(v); renderMe(); });
+const typeLabel = (t) => ({ test: "ทดสอบนับครั้ง", workout: "ฝึกตามโปรแกรม", rhythm: "ฝึกตามจังหวะ" }[t] || "นับจำนวนครั้ง");
+
+function renderMeSync() {
+  const u = me();
+  const el = $("pSync");
+  $("pSyncNow").hidden = !(u && u.mode === "online" && !u.needLogin);
+  $("pRelogin").hidden = !(u && u.needLogin);
+  if (!u) { el.textContent = "ยังไม่ได้เลือกผู้ฝึก"; return; }
+  if (u.mode !== "online") { el.textContent = "ผลเก็บไว้ในเครื่องนี้เท่านั้น"; return; }
+  if (u.needLogin) { el.textContent = "ต้องเข้าสู่ระบบใหม่ ผลที่ยังไม่ได้ส่งยังเก็บไว้ในเครื่อง"; el.style.color = "var(--bad)"; return; }
+  el.style.color = "";
+  const n = pendingOf(u);
+  el.textContent = sync.busy ? "กำลังส่งข้อมูลให้ครู..." : n ? `รอส่ง ${n} รายการ${sync.error ? " • " + sync.error : ""}` : `ส่งข้อมูลให้ครูแล้ว${sync.lastOk ? " • " + sync.lastOk.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }) : ""}`;
+}
+function achHtml(a, s) {
+  const v = a.metric(s), t = s.tiers[a.id] || 0;
+  const next = a.tiers[t];
+  const prev = t ? a.tiers[t - 1] : 0;
+  const frac = next ? Math.min(1, (v - prev) / (next - prev)) : 1;
+  const progText = next ? `${Math.min(v, next)}/${next} ${a.unit} → ${TIER_NAMES[t + 1]}` : "ครบทุกระดับแล้ว";
+  return `<div class="ach" data-tier="${t}">
+    <span class="medal" data-tier="${t}">${icon(a.icon)}</span>
+    <div><div class="row-between" style="gap:6px"><b>${a.name}</b><span class="pips">${[1, 2, 3].map((i) => `<i class="${i <= t ? "t" + i : ""}"></i>`).join("")}</span></div>
+      <div class="a-desc">${a.desc} ${a.tiers.join(" / ")} ${a.unit}</div>
+      <div class="a-prog"><div class="xpbar"><i style="width:${Math.max(0, frac) * 100}%"></i></div><span class="num">${progText}</span></div>
+    </div>
+  </div>`;
+}
+function renderChart(recs) {
+  const data = recs.filter((r) => isTest(r) && secOf(r) === sDur).slice(-12);
+  const ev = EVENTS[sDur];
+  if (!data.length) { $("sChart").innerHTML = `<div class="empty">ยังไม่มีผลทดสอบ ${ev.code} ${ev.label}<br>ไปที่เมนู "ทดสอบ" เพื่อเริ่ม</div>`; return; }
+  const W = 640, H = 230, pl = 40, pr = 12, pt = 22, pb = 34;
+  const max = Math.max(...data.map((d) => d.value), 10);
+  const step = max > 300 ? 100 : max > 150 ? 50 : max > 60 ? 20 : 10;
+  const top = Math.ceil(max / step) * step;
+  const y = (v) => pt + (H - pt - pb) * (1 - v / top);
+  const bw = (W - pl - pr) / data.length;
+  const best = Math.max(...data.map((d) => d.value));
+  let g = "";
+  for (let v = 0; v <= top; v += step) g += `<line class="grid" x1="${pl}" x2="${W - pr}" y1="${y(v)}" y2="${y(v)}"/><text class="axis" x="${pl - 6}" y="${y(v) + 4}" text-anchor="end">${v}</text>`;
+  data.forEach((d, i) => {
+    const x = pl + i * bw + bw * 0.2, w = bw * 0.6;
+    const dt = new Date(d.date);
+    g += `<rect class="barr ${d.value === best ? "best" : ""}" x="${x}" y="${y(d.value)}" width="${w}" height="${Math.max(0, y(0) - y(d.value))}" rx="6"/>`;
+    g += `<text class="lbl" x="${x + w / 2}" y="${y(d.value) - 6}" text-anchor="middle">${d.value}</text>`;
+    g += `<text class="axis" x="${x + w / 2}" y="${H - 12}" text-anchor="middle">${dt.getDate()}/${dt.getMonth() + 1}</text>`;
+  });
+  $("sChart").innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="กราฟผลทดสอบ ${ev.code}">${g}</svg>`;
+}
+function renderMe() {
+  const u = me();
+  const s = analyze(activeId);
+  $("pAvatar").innerHTML = avatarHtml(u || { name: "?" }, 72, u ? syncDot(u) : "");
+  $("pName").textContent = u ? u.name : "ยังไม่ได้เลือกผู้ฝึก";
+  $("pSub").textContent = !u ? "กดสลับ / เพิ่มผู้ฝึก เพื่อเริ่ม" : u.mode === "online" ? `บัญชีโรงเรียน • ห้อง ${u.classCode} เลขที่ ${u.no}` : "ใช้ในเครื่องนี้";
+  $("pLevel").textContent = `Lv.${s.level}`; $("pRank").textContent = rankOf(s.level);
+  $("pXp").textContent = `${s.into}/${s.need} XP`; $("pXpBar").style.width = `${(s.into / s.need) * 100}%`;
+  $("pRename").hidden = !(u && u.mode === "local");
+  renderMeSync();
+
+  $("sSessions").innerHTML = `${s.sessions}<small> ครั้ง</small>`;
+  $("sMinutes").textContent = `รวม ${s.minutes} นาที`;
+  $("sStreak").innerHTML = `${s.streak}<small> วัน</small>`;
+  $("sBestStreak").textContent = `ยาวที่สุด ${s.bestStreak} วัน`;
+  $("sBest30").innerHTML = s.b30 === null ? "—" : `${s.b30}<small> ครั้ง</small>`;
+  $("sBest180").innerHTML = s.b180 === null ? "—" : `${s.b180}<small> ครั้ง</small>`;
+  $("sMedalCount").textContent = `${s.medals} / ${ACHIEVEMENTS.length * 3}`;
+  $("sAchs").innerHTML = ACHIEVEMENTS.map((a) => achHtml(a, s)).join("");
+  renderChart(s.recs);
+
+  const locals = users.filter((x) => x.mode === "local" && x.id !== activeId && recordsOf(x.id).length);
+  $("sImport").hidden = !(u && u.mode === "online" && locals.length);
+  $("sImportFrom").innerHTML = locals.map((x) => `<option value="${x.id}">${esc(x.name)} (${recordsOf(x.id).length} รายการ)</option>`).join("");
+  $("sCsvAll").hidden = users.length < 2;
+  $("sClear").hidden = !(u && u.mode === "local" && s.recs.length);
+
+  $("sBody").innerHTML = s.recs.length ? [...s.recs].reverse().map((r) => `<tr>
+    <td>${fmtDate(r.date)}</td><td>${typeLabel(r.type)}</td><td>${esc(r.detail)}</td><td class="n">${esc(r.result)}</td>
+    <td>${u && u.mode === "online" ? (r.synced ? `<span class="pill up">ส่งแล้ว</span>` : `<span class="pill warn">รอส่ง</span>`) : ""}</td></tr>`).join("")
+    : `<tr><td colspan="5" class="empty">ยังไม่มีผลการฝึก เริ่มจากเมนู "แผนฝึก" หรือ "ทดสอบ"</td></tr>`;
+}
+$("pRename").addEventListener("click", () => { const f = $("pRenameForm"); f.hidden = !f.hidden; if (!f.hidden) { $("pRenameInput").value = me()?.name || ""; $("pRenameInput").focus(); } });
+$("pRenameForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const u = me(); const n = $("pRenameInput").value.trim();
+  if (!u || u.mode !== "local" || !n) return;
+  u.name = n; saveUsers();
+  saveRecords(loadRecords().map((r) => (r.userId === u.id ? { ...r, name: n } : r)));
+  $("pRenameForm").hidden = true; refreshAll(); toast("เปลี่ยนชื่อแล้ว");
+});
+$("pSyncNow").addEventListener("click", () => syncActive());
+$("pRelogin").addEventListener("click", () => {
+  const u = me(); openAccount("login");
+  if (u) { loginMode = "login"; renderAccount(); $("lgClass").value = u.classCode || ""; $("lgNo").value = u.no || ""; $("lgPin").focus(); }
+});
+$("sImportBtn").addEventListener("click", () => {
+  const from = $("sImportFrom").value, u = me();
+  if (!from || !u || u.mode !== "online") return;
+  saveRecords(loadRecords().map((r) => (r.userId === from ? { ...r, userId: u.id, name: u.name, synced: false } : r)));
+  claims[u.id] = claims[u.id] || {};
+  Object.entries(claims[from] || {}).forEach(([k, c]) => { if (!claims[u.id][k]) claims[u.id][k] = { ...c, synced: false }; });
+  users = users.filter((x) => x.id !== from); delete claims[from]; saveClaims(); saveUsers();
+  refreshAll(); toast("ย้ายผลเข้าบัญชีแล้ว กำลังส่งให้ครู"); scheduleSync(200);
+});
+
+async function copySummary() {
+  const u = me(); const s = analyze(activeId);
+  const who = u ? (u.mode === "online" ? `${u.name} (${u.classCode} เลขที่ ${u.no})` : u.name) : "ไม่ระบุชื่อ";
+  const last = s.recs.slice(-5).reverse().map((r) => `- ${fmtDate(r.date)} ${typeLabel(r.type)}: ${r.detail} = ${r.result}`).join("\n");
+  const text = `ผลฝึกกระโดดเชือก: ${who}\nLv.${s.level} ${rankOf(s.level)} • XP ${s.xp} • เหรียญ ${s.medals}\n` +
+    `ฝึกทั้งหมด ${s.sessions} ครั้ง รวม ${s.minutes} นาที ต่อเนื่อง ${s.streak} วัน\n` +
+    `สถิติดีที่สุด (นับเท้าขวา): SRSS 30 วิ ${s.b30 ?? "-"} ครั้ง | SRSE 3 นาที ${s.b180 ?? "-"} ครั้ง\nล่าสุด:\n${last || "-"}`;
+  try { await navigator.clipboard.writeText(text); toast("คัดลอกแล้ว นำไปวางใน LINE ได้เลย"); }
+  catch {
+    const ta = document.createElement("textarea"); ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select();
+    let ok = false; try { ok = document.execCommand("copy"); } catch {}
+    ta.remove(); toast(ok ? "คัดลอกแล้ว" : "คัดลอกไม่ได้ในหน้านี้");
+  }
+}
+async function exportCsv(all) {
+  const recs = all ? loadRecords() : myRecords();
+  if (!recs.length) { toast("ยังไม่มีข้อมูลให้ส่งออก"); return; }
+  const userOf = (r) => users.find((x) => x.id === r.userId);
+  const rows = [["วันที่", "ชื่อ", "ห้อง", "เลขที่", "รายการ", "รายละเอียด", "ผล", "ค่า", "วินาที"],
+    ...recs.map((r) => { const u = userOf(r) || {}; return [fmtDate(r.date), u.name || r.name || "", u.classCode || "", u.no || "", typeLabel(r.type), r.detail, r.result, r.value, secOf(r) || ""]; })];
+  const csv = "﻿" + rows.map((row) => row.map((v) => { let t = String(v ?? ""); if (/^[=+\-@]/.test(t)) t = "'" + t; return `"${t.replace(/"/g, '""')}"`; }).join(",")).join("\r\n");
+  const filename = `สถิติกระโดดเชือก_${new Date().toISOString().slice(0, 10)}.csv`;
+  const dl = window.claude?.use ? await window.claude.use("downloads").catch(() => null) : null;
+  if (dl) {
+    try { await dl.save({ filename, data: csv }); toast("บันทึกไฟล์แล้ว"); }
+    catch (e) { if (e?.code !== "declined") toast("ส่งออกไฟล์ไม่ได้ในหน้านี้"); }
+    return;
+  }
+  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+  const a = document.createElement("a"); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+$("sCopy").addEventListener("click", copySummary);
+$("sCsv").addEventListener("click", () => exportCsv(false));
+$("sCsvAll").addEventListener("click", () => exportCsv(true));
+$("sClear").addEventListener("click", () => { $("sConfirmText").textContent = `ลบผลฝึกทั้งหมดของ ${me()?.name || ""} ในเครื่องนี้? ลบแล้วกู้คืนไม่ได้`; $("sConfirm").hidden = false; });
+$("sConfirmNo").addEventListener("click", () => ($("sConfirm").hidden = true));
+$("sConfirmYes").addEventListener("click", () => {
+  const u = me(); if (!u || u.mode !== "local") return;
+  saveRecords(loadRecords().filter((r) => r.userId !== u.id)); delete claims[u.id]; saveClaims();
+  $("sConfirm").hidden = true; refreshAll(); toast("ลบผลแล้ว");
+});
+
+/* =========================================================
+   หน้าต่างผู้ฝึก / เข้าสู่ระบบ
+   ========================================================= */
+let acctTab = "login", loginMode = "login";
+const busyTraining = () => wo.running || !["idle", "done"].includes(test.phase) || rh.running;
+function openAccount(tab) {
+  if (tab) acctTab = tab;
+  else if (!apiUrl()) acctTab = "local";
+  renderAccount(); $("acct").hidden = false; document.body.style.overflow = "hidden";
+  $("lgMsg").textContent = ""; $("lcMsg").textContent = "";
+}
+function closeAccount() { $("acct").hidden = true; document.body.style.overflow = ""; }
+function userRowHtml(u) {
+  const active = u.id === activeId;
+  const sub = u.mode === "online" ? `ห้อง ${u.classCode} เลขที่ ${u.no} • บัญชีโรงเรียน` : `ใช้ในเครื่องนี้ • ${recordsOf(u.id).length} รายการ`;
+  const tag = u.needLogin ? `<span class="pill warn">เข้าสู่ระบบใหม่</span>` : active ? `<span class="pill up">กำลังใช้</span>` : "";
+  const n = pendingOf(u);
+  const warn = u.mode === "local" ? `ลบ ${esc(u.name)} และผลฝึก ${recordsOf(u.id).length} รายการในเครื่องนี้?`
+    : n ? `ยังมีผลที่ยังไม่ได้ส่ง ${n} รายการ จะหายถ้านำออก` : `นำบัญชีออกจากเครื่องนี้? ผลยังอยู่ในระบบโรงเรียนครบ`;
+  return `<div class="user-row ${active ? "active" : ""}">
+      ${avatarHtml(u, 40, syncDot(u))}
+      <button class="user-main" data-switch-user="${u.id}"><b>${esc(u.name)}</b><small>${esc(sub)}</small></button>
+      ${tag}
+      <button class="icon-btn sm" data-remove="${u.id}" aria-label="นำ ${esc(u.name)} ออกจากเครื่อง" title="นำออก">${icon("x")}</button>
+    </div>
+    <div class="confirm" data-confirm="${u.id}" hidden><span>${warn}</span><button class="btn danger sm" data-remove-yes="${u.id}">ยืนยัน</button><button class="btn ghost sm" data-remove-no="${u.id}">ยกเลิก</button></div>`;
+}
+function renderAccount() {
+  $("acctUsers").innerHTML = users.length ? users.map(userRowHtml).join("") : `<p class="muted" style="font-size:.9rem">ยังไม่มีผู้ฝึกในเครื่องนี้ เข้าสู่ระบบหรือเพิ่มผู้ฝึกด้านล่าง</p>`;
+  $("acctAddLabel").hidden = !users.length;
+  setPressed($("acctTabs"), acctTab);
+  $("fLogin").hidden = acctTab !== "login"; $("fLocal").hidden = acctTab !== "local";
+  setPressed($("loginMode"), loginMode);
+  const reg = loginMode === "register";
+  $("lgNameWrap").hidden = !reg; $("lgPin2Wrap").hidden = !reg;
+  $("lgSubmit").textContent = reg ? "สมัครและเข้าสู่ระบบ" : "เข้าสู่ระบบ";
+  const has = !!apiUrl();
+  $("noSchool").hidden = has; $("loginFields").disabled = !has;
+  const sid = schoolId();
+  $("schoolInput").value = sid ? `https://script.google.com/macros/s/${sid}/exec` : "";
+  $("shareWrap").hidden = !sid;
+  if (sid) $("shareLink").textContent = `${location.origin}${location.pathname}?s=${sid}`;
+}
+chipGroup("acctTabs", acctTab, (v) => { acctTab = v; renderAccount(); });
+chipGroup("loginMode", loginMode, (v) => { loginMode = v; $("lgMsg").textContent = ""; renderAccount(); });
+$("acctBtn").addEventListener("click", () => openAccount());
+document.addEventListener("click", (e) => { const b = e.target.closest("[data-acct]"); if (b) openAccount(b.dataset.acct || undefined); });
+$("acctClose").addEventListener("click", closeAccount);
+$("acct").addEventListener("click", (e) => { if (e.target === $("acct")) closeAccount(); });
+$("acctUsers").addEventListener("click", (e) => {
+  const sw = e.target.closest("[data-switch-user]");
+  if (sw) {
+    if (busyTraining()) { toast("จบการฝึกหรือการทดสอบก่อนสลับผู้ฝึก"); return; }
+    activeId = sw.dataset.switchUser; saveUsers(); closeAccount(); refreshAll();
+    const u = me(); toast(`สลับเป็น ${u.name}`);
+    if (u.mode === "online") scheduleSync(200);
+    return;
+  }
+  const rm = e.target.closest("[data-remove]");
+  if (rm) { document.querySelector(`[data-confirm="${rm.dataset.remove}"]`).hidden = false; return; }
+  const no = e.target.closest("[data-remove-no]");
+  if (no) { document.querySelector(`[data-confirm="${no.dataset.removeNo}"]`).hidden = true; return; }
+  const yes = e.target.closest("[data-remove-yes]");
+  if (yes) {
+    if (busyTraining() && yes.dataset.removeYes === activeId) { toast("จบการฝึกก่อนนำผู้ฝึกออก"); return; }
+    const id = yes.dataset.removeYes;
+    users = users.filter((u) => u.id !== id);
+    saveRecords(loadRecords().filter((r) => r.userId !== id));
+    delete claims[id]; saveClaims();
+    if (activeId === id) activeId = users[0]?.id || null;
+    saveUsers(); renderAccount(); refreshAll(); toast("นำออกจากเครื่องแล้ว");
+  }
+});
+$("fLocal").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const n = $("lcName").value.trim();
+  if (!n) { $("lcMsg").className = "form-msg err"; $("lcMsg").textContent = "กรุณาใส่ชื่อ"; return; }
+  if (busyTraining()) { toast("จบการฝึกก่อนสลับผู้ฝึก"); return; }
+  const u = { id: uid(), mode: "local", name: n, createdAt: new Date().toISOString() };
+  users.push(u); activeId = u.id; saveUsers();
+  $("lcName").value = ""; closeAccount(); refreshAll(); toast(`เพิ่ม ${n} แล้ว`);
+});
+$("fLogin").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const msg = $("lgMsg"); msg.className = "form-msg err";
+  const reg = loginMode === "register";
+  const classCode = $("lgClass").value.trim(), no = $("lgNo").value.trim(), pin = $("lgPin").value.trim(), name = $("lgName").value.trim();
+  if (!classCode || !no) { msg.textContent = "กรุณาใส่รหัสห้องและเลขที่"; return; }
+  if (!/^\d{4,6}$/.test(pin)) { msg.textContent = "PIN ต้องเป็นตัวเลข 4–6 หลัก"; return; }
+  if (reg && pin !== $("lgPin2").value.trim()) { msg.textContent = "PIN ทั้งสองช่องไม่ตรงกัน"; return; }
+  if (busyTraining()) { msg.textContent = "จบการฝึกหรือการทดสอบก่อนเข้าสู่ระบบ"; return; }
+  const btn = $("lgSubmit"); btn.disabled = true; btn.textContent = "กำลังเชื่อมต่อ...";
+  msg.className = "form-msg"; msg.textContent = "";
+  try {
+    const sid = schoolId();
+    const data = await api(apiUrl(), reg ? "register" : "login", { classCode, no, pin, name });
+    let u = users.find((x) => x.mode === "online" && (x.school || "") === sid && x.classCode === data.profile.classCode && String(x.no) === String(data.profile.no));
+    if (!u) { u = { id: uid(), mode: "online", school: sid, createdAt: new Date().toISOString() }; users.push(u); }
+    Object.assign(u, { name: data.profile.name, classCode: data.profile.classCode, no: data.profile.no, token: data.token, needLogin: false });
+    activeId = u.id;
+    applyServerData(u, data);
+    sync.error = ""; sync.lastOk = new Date();
+    $("lgPin").value = ""; $("lgPin2").value = ""; $("lgName").value = ""; loginMode = "login";
+    closeAccount(); refreshAll(); toast(`ยินดีต้อนรับ ${u.name}`);
+    if (pendingOf(u)) scheduleSync(300);
+  } catch (err) {
+    msg.className = "form-msg err"; msg.textContent = err.message;
+    if (err.code === "notfound" || err.code === "nopin") { loginMode = "register"; renderAccount(); msg.className = "form-msg err"; msg.textContent = err.message; }
+  } finally { btn.disabled = false; renderAccount(); }
+});
+$("schoolSave").addEventListener("click", async () => {
+  const v = $("schoolInput").value.trim(), msg = $("schoolMsg");
+  const id = (/\/macros\/s\/([A-Za-z0-9_-]+)/.exec(v) || [])[1] || (SCHOOL_RE.test(v) ? v : "");
+  if (!id) { msg.className = "form-msg err"; msg.textContent = "รูปแบบไม่ถูกต้อง ต้องเป็นลิงก์ที่ลงท้ายด้วย /exec"; return; }
+  store.set("jr.school", id);
+  msg.className = "form-msg"; msg.textContent = "กำลังทดสอบการเชื่อมต่อ...";
+  try {
+    const d = await api(urlFor(id), "ping", {});
+    msg.className = "form-msg ok"; msg.textContent = `เชื่อมกับ "${d.name}" สำเร็จ ส่งลิงก์ด้านล่างให้นักเรียนได้เลย`;
+  } catch (err) {
+    msg.className = "form-msg err"; msg.textContent = `บันทึกแล้ว แต่ทดสอบไม่ผ่าน: ${err.message}`;
+  }
+  renderAccount();
+});
+$("schoolClear").addEventListener("click", () => { store.set("jr.school", ""); $("schoolMsg").textContent = "ยกเลิกการเชื่อมแล้ว"; renderAccount(); });
+$("shareCopy").addEventListener("click", async () => {
+  const t = $("shareLink").textContent;
+  try { await navigator.clipboard.writeText(t); toast("คัดลอกลิงก์แล้ว"); }
+  catch { const r = document.createRange(); r.selectNodeContents($("shareLink")); const s = getSelection(); s.removeAllRanges(); s.addRange(r); toast("เลือกลิงก์แล้ว กดคัดลอกได้เลย"); }
+});
+
+/* ---------- เริ่มต้น ---------- */
+show(location.hash.slice(1) || "home");
+refreshTop();
+if (me()?.mode === "online") scheduleSync(800);
+window.addEventListener("pagehide", () => { stopCamera(); rMetro.stop(); woMetro.stop(); try { tAudio.pause(); } catch {} });
+</script>
+
+</body>
+</html>
