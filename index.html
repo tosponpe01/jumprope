@@ -818,7 +818,7 @@ td.n { font-family: var(--font-display); font-variant-numeric: tabular-nums; fon
       </details>
 
       <p id="tCamNote" class="note" hidden></p>
-      <p class="note"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16v.01"/></svg><span>โหมดกล้อง: ตั้งโทรศัพท์ห่าง 2–3 เมตร สูงประมาณเข่า ให้เห็นตั้งแต่สะโพกถึงปลายเท้า หันหน้าเข้ากล้อง ที่สว่างและไม่ย้อนแสง ยืนนิ่ง 3 วินาที แล้วเสียงสัญญาณจะเริ่มเอง กด "ทดลองนับ" ก่อนเพื่อดูว่าตัวเลขขึ้นตามเท้าขวา ถ้ากล้องใช้ไม่ได้ ให้ใช้แบบแตะนับ</span></p>
+      <p class="note"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16v.01"/></svg><span>โหมดกล้อง: ตั้งโทรศัพท์ห่าง 2–3 เมตร สูงประมาณเข่า ให้เห็นตั้งแต่สะโพกถึงปลายเท้า หันหน้าเข้ากล้อง ที่สว่างและไม่ย้อนแสง ยืนนิ่ง 3 วินาที แล้วเสียงสัญญาณจะเริ่มเอง กล้องนับ 1 ครั้งเมื่อเท้าสลับกัน ยกซ้าย-ลง แล้วยกขวา-ลง (ยกเท้าข้างเดียวไม่นับ) กด "ทดลองนับ" ก่อนเพื่อดูว่าตัวเลขขึ้นตามเท้าขวา ถ้ากล้องใช้ไม่ได้ ให้ใช้แบบแตะนับ</span></p>
     </section>
 
     <!-- ===================== ภารกิจ ===================== -->
@@ -1958,16 +1958,18 @@ $("tDiscard").addEventListener("click", () => { $("tResult").hidden = true; setT
 /* ---------- กล้อง + MediaPipe: นับเท้าขวาแบบ Speed Step ----------
    สัญญาณ = (ความสูงเท้าขวา − เท้าซ้าย) ÷ ความยาวขา จึงไม่ขึ้นกับระยะกล้อง การเด้งตัว การยืนบนปลายเท้า
    หรือการเดินเข้า-ออก เท้าขวาแตะพื้น 1 ครั้ง = สัญญาณขึ้นยอด 1 ครั้ง เกณฑ์ปรับตามระยะยกเท้าของแต่ละคน
-   และตามสัญญาณรบกวนที่วัดตอนยืนนิ่ง (ค่าทดสอบด้วยข้อมูลจำลอง 1,152 แบบ) */
+   และตามสัญญาณรบกวนที่วัดตอนยืนนิ่ง (ค่าทดสอบด้วยข้อมูลจำลอง 1,152 แบบ)
+   5.2: ต้องสลับเท้า ซ้ายยก-ลง แล้วขวายก-ลง = 1 ครั้ง ยกเท้าข้างเดียวซ้ำๆ ไม่นับ
+   (เทียบกับระดับตอนยืนสองเท้าที่วัดไว้ตอนยืนนิ่ง) */
 const CALIB_SEC = 3;
-const STEP = { vis: 0.3, tau: 70, win: 1200, rMin: 0.014, kNoise: 3.5, hyst: 0.25, gap: 170, minCalib: 15 };
+const STEP = { vis: 0.3, tau: 70, win: 1200, rMin: 0.014, kNoise: 3.5, hyst: 0.25, gap: 170, minCalib: 15, altMin: 0.008, altK: 0.3, altNoiseK: 3 };
 const cam = { mp: null, landmarker: null, draw: null, stream: null, raf: null, vfc: null, on: false, run: 0,
   facing: store.get("jr.camFacing", "user") === "environment" ? "environment" : "user",
   counter: null, calStart: 0, lastTs: 0, lastVT: -1, times: [], infoAt: 0, rec: null, lastRec: null };
 const video = $("tVideo"), canvas = $("tCanvas"), ctx2d = canvas.getContext("2d");
 
 function makeStepCounter() {
-  const st = { leg: null, noise: 0, cal: [], calLeg: [], ds: null, lastT: null, buf: [], high: false, last: -1e9, amp: 0, visible: false };
+  const st = { leg: null, noise: 0, d0: 0, cal: [], calLeg: [], ds: null, lastT: null, buf: [], high: false, last: -1e9, amp: 0, visible: false, maxD: -Infinity, minD: Infinity, skipped: 0 };
   const vOf = (p) => Math.min(p.visibility ?? 1, p.presence ?? 1);
   const footY = (lms, idx) => {
     let w = 0, y = 0;
@@ -2002,17 +2004,25 @@ function makeStepCounter() {
       if (st.cal.length < STEP.minCalib) return false;
       st.leg = [...st.calLeg].sort((a, b) => a - b)[st.calLeg.length >> 1];
       const m = st.cal.reduce((a, b) => a + b, 0) / st.cal.length;
+      st.d0 = m;                    // ระดับสัญญาณตอนสองเท้าอยู่บนพื้น
       st.noise = Math.sqrt(st.cal.reduce((a, b) => a + (b - m) ** 2, 0) / st.cal.length);
-      st.buf = []; st.high = false; return true;
+      st.buf = []; st.high = false; st.maxD = -Infinity; st.minD = Infinity; return true;
     },
-    update(lms, t) {               // true = นับเท้าขวาแตะพื้น 1 ครั้ง
+    update(lms, t) {               // true = ซ้ายยก-ลง แล้วขวายก-ลง ครบ 1 รอบ (นับตอนเท้าขวาแตะพื้น)
       const s = signal(lms, t); if (!s) return false;
+      if (s.d > st.maxD) st.maxD = s.d; if (s.d < st.minD) st.minD = s.d;
       st.buf.push([t, s.d]); while (st.buf.length && st.buf[0][0] < t - STEP.win) st.buf.shift();
       let mx = -Infinity, mn = Infinity; st.buf.forEach(([, v]) => { if (v > mx) mx = v; if (v < mn) mn = v; });
       const c = (mx + mn) / 2, r = (mx - mn) / 2; st.amp = r;
       if (r < Math.max(STEP.rMin, STEP.kNoise * st.noise)) { st.high = s.d > c; return false; }
-      if (!st.high && s.d > c + STEP.hyst * r) { st.high = true; if (t - st.last >= STEP.gap) { st.last = t; return true; } }
-      else if (st.high && s.d < c - STEP.hyst * r) st.high = false;
+      if (!st.high && s.d > c + STEP.hyst * r) {          // เท้าขวาลงพื้น
+        st.high = true;
+        const g = Math.max(STEP.altMin, STEP.altK * r, STEP.altNoiseK * st.noise);
+        const alternated = st.maxD - st.d0 >= g && st.d0 - st.minD >= g;   // เท้าซ้ายยกแล้ว และเท้าขวายกแล้ว
+        st.maxD = -Infinity; st.minD = Infinity;
+        if (!alternated) { st.skipped++; return false; }
+        if (t - st.last >= STEP.gap) { st.last = t; return true; }
+      } else if (st.high && s.d < c - STEP.hyst * r) st.high = false;
       return false;
     }
   };
@@ -2069,7 +2079,7 @@ function stopCamera() {
   $("tCamFeet").className = ""; $("tCamFeet").textContent = "กดเริ่มหรือทดลองนับเพื่อเปิดกล้อง";
 }
 function beginCalibration(retry) {
-  cam.counter = makeStepCounter(); cam.calStart = performance.now();
+  cam.counter = makeStepCounter(); cam.calStart = performance.now(); cam.skipped = 0; cam.warned = false;
   setPhase("calib");
   if (!retry) startRecording();
 }
@@ -2156,7 +2166,13 @@ function processPose(res, now) {
     return;
   }
   if (!["intro", "go", "practice"].includes(test.phase)) return;
-  if (k.update(lms, now)) { addCount(); if (cam.rec) cam.rec.hits.push(Math.round(now - cam.rec.t0)); }
+  if (k.update(lms, now)) {
+    addCount(); if (cam.rec) cam.rec.hits.push(Math.round(now - cam.rec.t0));
+    if (test.phase === "practice" && cam.warned) { cam.warned = false; setTStatus("ทดลองกระโดด Speed Step ดูว่าตัวเลขขึ้นตามเท้าขวา กดยกเลิกเมื่อพอ", "--go"); }
+  } else if (k.state.skipped !== cam.skipped) {
+    cam.skipped = k.state.skipped;
+    if (test.phase === "practice") { cam.warned = true; setTStatus("ไม่นับ: ต้องสลับเท้า ยกซ้าย-ลง แล้วยกขวา-ลง", "--warn"); }
+  }
   camInfo(k.state.visible ? "เห็นเท้าทั้งสองข้าง" : "มองไม่เห็นเท้า", k.state.visible);
 }
 function drawFrame(res) {
