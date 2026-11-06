@@ -345,7 +345,7 @@ fieldset:disabled { opacity: .45; }
   border-radius: 26px; border: 1px solid var(--line);
   background: radial-gradient(420px 300px at 50% 0%, color-mix(in srgb, var(--ring) 14%, transparent), transparent 70%), var(--card);
 }
-.stage[data-phase="work"], .stage[data-phase="done"] { --ring: var(--go); }
+.stage[data-phase="work"], .stage[data-phase="done"], .stage[data-phase="practice"] { --ring: var(--go); }
 .stage[data-phase="rest"] { --ring: var(--rest); }
 .stage[data-phase="ready"], .stage[data-phase="intro"], .stage[data-phase="calib"], .stage[data-phase="camera"], .stage[data-phase="needplay"] { --ring: var(--warn); }
 .phase-pill {
@@ -401,6 +401,13 @@ fieldset:disabled { opacity: .45; }
 .camera { position: relative; width: 100%; max-width: 560px; aspect-ratio: 4 / 3; border-radius: 18px; overflow: hidden; background: #000; }
 .camera canvas { width: 100%; height: 100%; display: block; object-fit: contain; }
 .camera video { display: none; }
+.cam-flip { position: absolute; top: 8px; right: 8px; z-index: 2; background: rgba(10, 16, 32, .72); }
+.cam-info { position: absolute; left: 8px; right: 52px; top: 8px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; pointer-events: none; }
+.cam-info span { background: rgba(10, 16, 32, .8); color: var(--fg); border-radius: 999px; padding: 3px 10px; font-size: .78rem; font-weight: 600; white-space: nowrap; }
+.cam-info .ok { color: var(--go); } .cam-info .bad { color: var(--bad); } .cam-info .warn { color: var(--warn); }
+.cam-meter { display: inline-block; width: 52px; height: 6px; margin-left: 6px; border-radius: 3px; background: rgba(255, 255, 255, .2); vertical-align: middle; overflow: hidden; }
+.cam-meter i { display: block; height: 100%; width: 0; background: var(--go); transition: width .15s; }
+.cam-tools { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
 .result { display: grid; gap: 12px; border-color: color-mix(in srgb, var(--go) 60%, var(--line)); }
 .result input[type=number] {
   width: 130px; font: 700 1.5rem var(--font-display); color: var(--fg); background: var(--card2); border: 1px solid var(--line); border-radius: 12px; padding: 6px 12px;
@@ -763,6 +770,12 @@ td.n { font-family: var(--font-display); font-variant-numeric: tabular-nums; fon
         <div id="tCamBox" class="camera" hidden>
           <video id="tVideo" autoplay playsinline muted></video>
           <canvas id="tCanvas"></canvas>
+          <button id="tCamFlip" class="icon-btn sm cam-flip" type="button" aria-label="สลับกล้องหน้า-หลัง" title="สลับกล้องหน้า-หลัง"><svg class="i" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><path d="M9 13a3 3 0 0 0 5.2 2M15 12a3 3 0 0 0-5.2-2M14 15h1v1M10 10H9V9"/></svg></button>
+          <div class="cam-info" aria-live="polite"><span id="tCamFeet">กดเริ่มหรือทดลองนับเพื่อเปิดกล้อง</span><span id="tCamSig" hidden>สัญญาณเท้า<b class="cam-meter"><i id="tCamMeter"></i></b></span><span id="tCamFps" hidden></span></div>
+        </div>
+        <div id="tCamTools" class="cam-tools" hidden>
+          <button id="tCamTry" class="btn ghost sm" type="button">ทดลองนับ (ไม่บันทึก)</button>
+          <button id="tCamData" class="btn ghost sm" type="button" hidden>ดาวน์โหลดข้อมูลกล้อง (ส่งให้ผู้พัฒนาปรับการนับ)</button>
         </div>
         <div class="controls">
           <button id="tCancel" class="icon-btn danger" disabled aria-label="ยกเลิก" title="ยกเลิก"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
@@ -805,7 +818,7 @@ td.n { font-family: var(--font-display); font-variant-numeric: tabular-nums; fon
       </details>
 
       <p id="tCamNote" class="note" hidden></p>
-      <p class="note"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16v.01"/></svg><span>โหมดกล้อง: วางโทรศัพท์ให้เห็นเต็มตัวถึงข้อเท้า ยืนนิ่ง 5 วินาทีให้ระบบหาระดับพื้น แล้วเสียงสัญญาณจะเริ่มเอง ถ้ากล้องใช้ไม่ได้ ให้ใช้แบบแตะนับ</span></p>
+      <p class="note"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16v.01"/></svg><span>โหมดกล้อง: ตั้งโทรศัพท์ห่าง 2–3 เมตร สูงประมาณเข่า ให้เห็นตั้งแต่สะโพกถึงปลายเท้า หันหน้าเข้ากล้อง ที่สว่างและไม่ย้อนแสง ยืนนิ่ง 3 วินาที แล้วเสียงสัญญาณจะเริ่มเอง กด "ทดลองนับ" ก่อนเพื่อดูว่าตัวเลขขึ้นตามเท้าขวา ถ้ากล้องใช้ไม่ได้ ให้ใช้แบบแตะนับ</span></p>
     </section>
 
     <!-- ===================== ภารกิจ ===================== -->
@@ -1790,7 +1803,7 @@ function setTStatus(msg, color) { $("tStatus").textContent = msg; $("tStatus").s
 function setCount(n) { test.count = n; $("tCount").textContent = n; }
 function setPhase(p) { test.phase = p; $("tStage").dataset.phase = p; }
 function lockTestOptions(lock) { $("tDur").dataset.locked = lock ? "1" : "0"; $("tMethod").dataset.locked = lock ? "1" : "0"; }
-function syncTestMethod() { const cam = test.method === "cam"; $("tTap").hidden = cam; $("tCamBox").hidden = !cam; }
+function syncTestMethod() { const cam = test.method === "cam"; $("tTap").hidden = cam; $("tCamBox").hidden = !cam; $("tCamTools").hidden = !cam; }
 function resetTestDisplay() { setCount(0); $("tTime").textContent = fmt(test.dur); $("tTimeLabel").textContent = "เวลา"; setRing($("tRing"), 1); }
 function setTestDur(d) {
   if (!EVENTS[d] || !["idle", "done"].includes(test.phase)) return;
@@ -1812,22 +1825,22 @@ function primeAudio() {
             .catch(() => { tAudio.muted = false; });
   } catch { tAudio.muted = false; }
 }
-async function startTest() {
+async function startTest(practice) {
   audio();
+  test.practice = practice === true;           // ทดลองนับด้วยกล้อง: ไม่มีเสียงแข่ง ไม่จับเวลา ไม่บันทึก
   $("tResult").hidden = true; $("tCamNote").hidden = true;
   resetTestDisplay(); test.pre = 0;
   lockTestOptions(true);
-  $("tStart").disabled = true; $("tCancel").disabled = false;
+  $("tStart").disabled = true; $("tCancel").disabled = false; $("tCamTry").disabled = true;
   keepAwake(true);
-  if (test.method === "tap") {
-    playTrack();
-  } else {
-    primeAudio();
-    setPhase("camera");
-    const ok = await startCamera();
-    if (!ok) { cancelTest(); return; }
-    setPhase("calib");
-  }
+  if (test.method === "tap") { playTrack(); return; }
+  if (!test.practice) primeAudio();
+  setPhase("camera");
+  const run = ++cam.run;
+  const ok = await startCamera();
+  if (run !== cam.run) { stopCamera(); return; }   // กดยกเลิกระหว่างเปิดกล้อง
+  if (!ok) { cancelTest(); return; }
+  beginCalibration();
 }
 function scheduleSynth() {
   const at = (sec, fn) => test.synthIds.push(setTimeout(fn, sec * 1000));
@@ -1882,6 +1895,7 @@ function tTick() {
 function addCount() {
   if (test.phase === "go") setCount(test.count + 1);
   else if (test.phase === "intro") { test.pre++; setTStatus("ออกตัวก่อนเสียง Beep!", "--bad"); }
+  else if (test.phase === "practice") setCount(test.count + 1);
 }
 function finishTest() {
   clearInterval(test.timer); setPhase("done");
@@ -1889,8 +1903,8 @@ function finishTest() {
   setTStatus(`ครบเวลา ได้ ${test.count} ครั้ง`, "--go");
   $("tTap").disabled = true;
   if (!aud.synth) { clearTimeout(test.stopId); test.stopId = setTimeout(() => tAudio.pause(), 1500); }
-  stopCamera(); keepAwake(false); lockTestOptions(false);
-  $("tStart").disabled = false; $("tCancel").disabled = true;
+  stopCamera(); finishRecording(); keepAwake(false); lockTestOptions(false);
+  $("tStart").disabled = false; $("tCancel").disabled = true; $("tCamTry").disabled = false;
   const ev = EVENTS[test.dur];
   const falseStart = test.method === "tap" ? test.pre >= 1 : test.pre >= 2;
   $("tFinal").value = test.count; $("tFinalDur").textContent = ev.label;
@@ -1912,15 +1926,19 @@ function updateNet() {
 $("tFinal").addEventListener("input", updateNet);
 $("tFalse").addEventListener("change", updateNet);
 function cancelTest() {
+  const wasPractice = test.phase === "practice";
+  cam.run++;
   clearInterval(test.timer);
   test.synthIds.forEach(clearTimeout); test.synthIds = [];
   try { tAudio.pause(); tAudio.currentTime = 0; } catch {}
-  setPhase("idle"); stopCamera(); keepAwake(false); lockTestOptions(false);
-  $("tStart").disabled = !aud.ready; $("tCancel").disabled = true; $("tTap").disabled = true; $("tPlay").hidden = true;
+  setPhase("idle"); stopCamera(); finishRecording(); keepAwake(false); lockTestOptions(false);
+  $("tStart").disabled = !aud.ready; $("tCancel").disabled = true; $("tTap").disabled = true; $("tPlay").hidden = true; $("tCamTry").disabled = false;
+  if (wasPractice) { setTStatus(`หยุดทดลองแล้ว กล้องนับได้ ${test.count} ครั้ง`, "--go"); return; }
   resetTestDisplay();
   setTStatus("ยกเลิกแล้ว");
 }
-$("tStart").addEventListener("click", startTest);
+$("tStart").addEventListener("click", () => startTest(false));
+$("tCamTry").addEventListener("click", () => startTest(true));
 $("tCancel").addEventListener("click", cancelTest);
 $("tPlay").addEventListener("click", () => playTrack());
 $("tVol").addEventListener("input", () => { tAudio.volume = Number($("tVol").value); });
@@ -1937,40 +1955,105 @@ $("tSave").addEventListener("click", () => {
 });
 $("tDiscard").addEventListener("click", () => { $("tResult").hidden = true; setTStatus("ไม่ได้บันทึกผลนี้"); });
 
-/* ---------- กล้อง + MediaPipe: นับเท้าขวาแบบ Speed Step ---------- */
-const CALIB_SEC = 5, VIS_MIN = 0.5, SMOOTH = 4, L_ANK = 27, R_ANK = 28;
-const ALT = { lift: 0.025, land: 0.012, diff: 0.015, leftGround: 0.025, gap: 180 };
-const cam = { mp: null, landmarker: null, draw: null, stream: null, raf: null, on: false,
-  baseL: null, baseR: null, calL: [], calR: [], hL: [], hR: [], state: "GROUND", last: 0, calStart: 0 };
+/* ---------- กล้อง + MediaPipe: นับเท้าขวาแบบ Speed Step ----------
+   สัญญาณ = (ความสูงเท้าขวา − เท้าซ้าย) ÷ ความยาวขา จึงไม่ขึ้นกับระยะกล้อง การเด้งตัว การยืนบนปลายเท้า
+   หรือการเดินเข้า-ออก เท้าขวาแตะพื้น 1 ครั้ง = สัญญาณขึ้นยอด 1 ครั้ง เกณฑ์ปรับตามระยะยกเท้าของแต่ละคน
+   และตามสัญญาณรบกวนที่วัดตอนยืนนิ่ง (ค่าทดสอบด้วยข้อมูลจำลอง 1,152 แบบ) */
+const CALIB_SEC = 3;
+const STEP = { vis: 0.3, tau: 70, win: 1200, rMin: 0.014, kNoise: 3.5, hyst: 0.25, gap: 170, minCalib: 15 };
+const cam = { mp: null, landmarker: null, draw: null, stream: null, raf: null, vfc: null, on: false, run: 0,
+  facing: store.get("jr.camFacing", "user") === "environment" ? "environment" : "user",
+  counter: null, calStart: 0, lastTs: 0, lastVT: -1, times: [], infoAt: 0, rec: null, lastRec: null };
 const video = $("tVideo"), canvas = $("tCanvas"), ctx2d = canvas.getContext("2d");
+
+function makeStepCounter() {
+  const st = { leg: null, noise: 0, cal: [], calLeg: [], ds: null, lastT: null, buf: [], high: false, last: -1e9, amp: 0, visible: false };
+  const vOf = (p) => Math.min(p.visibility ?? 1, p.presence ?? 1);
+  const footY = (lms, idx) => {
+    let w = 0, y = 0;
+    idx.forEach((i) => { const p = lms[i]; if (p && vOf(p) >= STEP.vis) { const v = vOf(p); w += v; y += v * p.y; } });
+    return w ? y / w : null;
+  };
+  const legOf = (lms) => {
+    const hv = [23, 24].filter((i) => lms[i] && vOf(lms[i]) >= STEP.vis), av = [27, 28].filter((i) => lms[i] && vOf(lms[i]) >= STEP.vis);
+    if (!hv.length || !av.length) return null;
+    const leg = av.reduce((a, i) => a + lms[i].y, 0) / av.length - hv.reduce((a, i) => a + lms[i].y, 0) / hv.length;
+    return leg > 0.05 ? leg : null;
+  };
+  function signal(lms, t) {
+    const yL = footY(lms, [27, 29, 31]), yR = footY(lms, [28, 30, 32]);
+    st.visible = yL !== null && yR !== null;
+    if (!st.visible) return null;
+    const leg = legOf(lms);
+    if (leg && st.leg) st.leg += 0.02 * (leg - st.leg);
+    const d = (yR - yL) / (st.leg || leg || 0.35);
+    const dt = st.lastT === null ? 33 : Math.max(1, t - st.lastT); st.lastT = t;
+    st.ds = st.ds === null ? d : st.ds + (1 - Math.exp(-dt / STEP.tau)) * (d - st.ds);
+    return { d: st.ds, leg };
+  }
+  return {
+    state: st,
+    gate: () => Math.max(STEP.rMin, STEP.kNoise * st.noise),
+    calibrate(lms, t) {
+      const s = signal(lms, t); if (!s || !s.leg) return false;
+      st.cal.push(s.d); st.calLeg.push(s.leg); return true;
+    },
+    finishCalib() {
+      if (st.cal.length < STEP.minCalib) return false;
+      st.leg = [...st.calLeg].sort((a, b) => a - b)[st.calLeg.length >> 1];
+      const m = st.cal.reduce((a, b) => a + b, 0) / st.cal.length;
+      st.noise = Math.sqrt(st.cal.reduce((a, b) => a + (b - m) ** 2, 0) / st.cal.length);
+      st.buf = []; st.high = false; return true;
+    },
+    update(lms, t) {               // true = นับเท้าขวาแตะพื้น 1 ครั้ง
+      const s = signal(lms, t); if (!s) return false;
+      st.buf.push([t, s.d]); while (st.buf.length && st.buf[0][0] < t - STEP.win) st.buf.shift();
+      let mx = -Infinity, mn = Infinity; st.buf.forEach(([, v]) => { if (v > mx) mx = v; if (v < mn) mn = v; });
+      const c = (mx + mn) / 2, r = (mx - mn) / 2; st.amp = r;
+      if (r < Math.max(STEP.rMin, STEP.kNoise * st.noise)) { st.high = s.d > c; return false; }
+      if (!st.high && s.d > c + STEP.hyst * r) { st.high = true; if (t - st.last >= STEP.gap) { st.last = t; return true; } }
+      else if (st.high && s.d < c - STEP.hyst * r) st.high = false;
+      return false;
+    }
+  };
+}
 
 async function loadModel() {
   if (cam.landmarker) return;
   setTStatus("กำลังโหลดตัวตรวจจับร่างกาย...");
   const mp = await import("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/+esm");
   const vision = await mp.FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm");
-  cam.landmarker = await mp.PoseLandmarker.createFromOptions(vision, {
-    baseOptions: { modelAssetPath: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task", delegate: "GPU" },
-    runningMode: "VIDEO", numPoses: 1, minPoseDetectionConfidence: 0.6, minPosePresenceConfidence: 0.6, minTrackingConfidence: 0.6
+  const opts = (delegate) => ({
+    baseOptions: { modelAssetPath: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task", delegate },
+    runningMode: "VIDEO", numPoses: 1, minPoseDetectionConfidence: 0.5, minPosePresenceConfidence: 0.5, minTrackingConfidence: 0.5
   });
+  try { cam.landmarker = await mp.PoseLandmarker.createFromOptions(vision, opts("GPU")); }
+  catch { cam.landmarker = await mp.PoseLandmarker.createFromOptions(vision, opts("CPU")); }   // บางเครื่องใช้ GPU ไม่ได้
   cam.mp = mp; cam.draw = new mp.DrawingUtils(ctx2d);
+}
+async function openStream() {
+  if (cam.stream) cam.stream.getTracks().forEach((t) => t.stop());
+  cam.stream = await navigator.mediaDevices.getUserMedia({
+    video: { facingMode: cam.facing, width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 30 } }, audio: false
+  });
+  video.srcObject = cam.stream;
+  await new Promise((r) => (video.readyState >= 1 ? r() : (video.onloadedmetadata = r)));
+  await video.play();
+  canvas.width = video.videoWidth || 640; canvas.height = video.videoHeight || 480;
+  cam.times = []; cam.lastVT = -1;
 }
 async function startCamera() {
   try {
     await loadModel();
     setTStatus("กำลังขอสิทธิ์ใช้กล้อง...");
-    cam.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 960 }, height: { ideal: 720 } }, audio: false });
-    video.srcObject = cam.stream;
-    await new Promise((r) => (video.readyState >= 1 ? r() : (video.onloadedmetadata = r)));
-    await video.play();
-    canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-    cam.on = true; resetCalibration();
+    await openStream();
+    cam.on = true;
     loop();
     return true;
   } catch (err) {
     console.warn(err); stopCamera();
     $("tCamNote").hidden = false;
-    $("tCamNote").textContent = "เปิดกล้องหรือโหลดตัวตรวจจับไม่ได้ ในบางหน้าเว็บ (เช่นหน้าที่ฝังอยู่ในแอปอื่น) กล้องจะถูกปิดไว้ ให้ใช้แบบแตะนับ หรือเปิดโปรแกรมนี้จากเว็บไซต์ที่เป็น https แล้วอนุญาตกล้อง";
+    $("tCamNote").textContent = "เปิดกล้องหรือโหลดตัวตรวจจับไม่ได้ ต้องต่ออินเทอร์เน็ตครั้งแรก และในบางหน้าเว็บ (เช่นหน้าที่ฝังอยู่ในแอปอื่น) กล้องจะถูกปิดไว้ ให้ใช้แบบแตะนับ หรือเปิดโปรแกรมนี้จากเว็บไซต์ที่เป็น https แล้วอนุญาตกล้อง";
     toast("ใช้กล้องไม่ได้ เปลี่ยนเป็นแตะนับ");
     test.method = "tap"; store.set("jr.tmethod", "tap"); setPressed($("tMethod"), "tap"); syncTestMethod();
     return false;
@@ -1979,66 +2062,140 @@ async function startCamera() {
 function stopCamera() {
   cam.on = false;
   if (cam.raf) cancelAnimationFrame(cam.raf); cam.raf = null;
+  if (cam.vfc !== null && video.cancelVideoFrameCallback) video.cancelVideoFrameCallback(cam.vfc); cam.vfc = null;
   if (cam.stream) cam.stream.getTracks().forEach((t) => t.stop()); cam.stream = null;
   video.srcObject = null;
+  $("tCamSig").hidden = true; $("tCamFps").hidden = true;
+  $("tCamFeet").className = ""; $("tCamFeet").textContent = "กดเริ่มหรือทดลองนับเพื่อเปิดกล้อง";
 }
-function resetCalibration() {
-  cam.baseL = cam.baseR = null; cam.calL = []; cam.calR = []; cam.hL = []; cam.hR = [];
-  cam.state = "GROUND"; cam.calStart = performance.now();
+function beginCalibration(retry) {
+  cam.counter = makeStepCounter(); cam.calStart = performance.now();
+  setPhase("calib");
+  if (!retry) startRecording();
 }
-const avg = (h, v) => { h.push(v); if (h.length > SMOOTH) h.shift(); return h.reduce((a, b) => a + b, 0) / h.length; };
-const visible = (lm) => (lm.visibility ?? 1) >= VIS_MIN && (lm.presence ?? 1) >= VIS_MIN;
-const median = (a) => { const s = [...a].sort((x, y) => x - y); const m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
-function processFeet(lms, now) {
-  const L = lms[L_ANK], R = lms[R_ANK];
-  if (!visible(L) || !visible(R)) { if (test.phase === "calib") setTStatus("ให้กล้องเห็นข้อเท้าทั้งสองข้าง", "--bad"); return; }
-  const sL = avg(cam.hL, L.y), sR = avg(cam.hR, R.y);
+function afterCalibration() {
+  if (cam.rec) cam.rec.meta.noise = cam.counter.state.noise;
+  if (!test.practice) { playTrack(); return; }
+  setPhase("practice");
+  $("tTimeLabel").textContent = "ทดลองนับ"; $("tTime").textContent = "—"; setRing($("tRing"), 1);
+  setTStatus("ทดลองกระโดด Speed Step ดูว่าตัวเลขขึ้นตามเท้าขวา กดยกเลิกเมื่อพอ", "--go");
+}
+
+/* บันทึกตำแหน่งข้อต่อ (ไม่มีภาพ) ไว้ส่งให้ผู้พัฒนาปรับเกณฑ์การนับ */
+const PH = { calib: 0, intro: 1, go: 2, practice: 3 };
+function startRecording() {
+  cam.rec = { meta: { app: "jumprope-camera", v: 2, date: new Date().toISOString(), event: EVENTS[test.dur].code, practice: !!test.practice,
+    facing: cam.facing, video: [canvas.width, canvas.height], ua: navigator.userAgent, step: STEP, landmarks: "23-32 x,y,vis" }, t0: performance.now(), frames: [], hits: [] };
+}
+function recordFrame(lms, now) {
+  const r = cam.rec; if (!r || r.frames.length > 20000 || !(test.phase in PH)) return;
+  const row = [Math.round(now - r.t0), PH[test.phase]];
+  for (let i = 23; i <= 32; i++) { const p = lms && lms[i]; row.push(p ? +p.x.toFixed(4) : null, p ? +p.y.toFixed(4) : null, p ? +(p.visibility ?? 0).toFixed(2) : null); }
+  r.frames.push(row);
+}
+function finishRecording() {
+  const r = cam.rec; cam.rec = null;
+  if (!r || r.frames.length < 30) return;
+  Object.assign(r.meta, { count: test.count, pre: test.pre, fps: camFps(), frames: r.frames.length });
+  cam.lastRec = r; $("tCamData").hidden = false;
+}
+async function saveFile(filename, data) {
+  const dl = window.claude?.use ? await window.claude.use("downloads").catch(() => null) : null;
+  if (dl) { try { await dl.save({ filename, data }); toast("บันทึกไฟล์แล้ว"); } catch (e) { if (e?.code !== "declined") toast("บันทึกไฟล์ไม่ได้ในหน้านี้"); } return; }
+  const url = URL.createObjectURL(new Blob([data], { type: "application/json" }));
+  const a = document.createElement("a"); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+$("tCamData").addEventListener("click", () => {
+  const r = cam.lastRec; if (!r) return;
+  const d = new Date(r.meta.date);
+  saveFile(`jumprope-camera-${dayKey(d)}-${pad2(d.getHours())}${pad2(d.getMinutes())}.json`, JSON.stringify({ meta: r.meta, hits: r.hits, frames: r.frames }));
+});
+$("tCamFlip").addEventListener("click", async () => {
+  if (["intro", "go", "needplay"].includes(test.phase)) { toast("สลับกล้องได้ก่อนเริ่มทดสอบ"); return; }
+  cam.facing = cam.facing === "user" ? "environment" : "user"; store.set("jr.camFacing", cam.facing);
+  toast(cam.facing === "user" ? "ใช้กล้องหน้า" : "ใช้กล้องหลัง");
+  if (!cam.on) return;
+  try { await openStream(); if (["calib", "practice"].includes(test.phase)) beginCalibration(true); } catch { toast("สลับกล้องไม่ได้"); }
+});
+
+function camFps() {
+  const t = cam.times; return t.length > 5 ? Math.round(((t.length - 1) * 1000) / (t[t.length - 1] - t[0])) : 0;
+}
+function camInfo(msg, ok) {
+  const now = performance.now(); if (now - cam.infoAt < 250) return; cam.infoAt = now;
+  const feet = $("tCamFeet"); feet.textContent = msg; feet.className = ok ? "ok" : "bad";
+  const k = cam.counter;
+  if (k && k.state.leg && ["intro", "go", "practice"].includes(test.phase)) {
+    const gate = k.gate(), f = Math.min(1, k.state.amp / (gate * 3));
+    $("tCamSig").hidden = false;
+    $("tCamMeter").style.width = `${Math.round(f * 100)}%`;
+    $("tCamMeter").style.background = k.state.amp >= gate ? "var(--go)" : "var(--warn)";
+  }
+  const fps = camFps();
+  if (fps) { const el = $("tCamFps"); el.hidden = false; el.textContent = fps < 20 ? `${fps} ภาพ/วิ • ช้า อาจนับขาด` : `${fps} ภาพ/วิ`; el.className = fps < 20 ? "warn" : ""; }
+}
+function processPose(res, now) {
+  const lms = res.landmarks[0];
+  recordFrame(lms, now);
+  const k = cam.counter;
+  if (!lms) {
+    camInfo("ไม่พบคนในภาพ", false);
+    if (test.phase === "calib") setTStatus("ไม่พบคนในภาพ ยืนให้เห็นตั้งแต่สะโพกถึงปลายเท้า", "--bad");
+    return;
+  }
+  if (!k) return;
   if (test.phase === "calib") {
-    cam.calL.push(sL); cam.calR.push(sR);
-    const el = (now - cam.calStart) / 1000;
-    setTStatus(`ยืนนิ่ง ${Math.max(0, CALIB_SEC - el).toFixed(1)} วิ`);
+    const ok = k.calibrate(lms, now), el = (now - cam.calStart) / 1000;
+    camInfo(ok ? "เห็นเท้าทั้งสองข้าง" : "มองไม่เห็นสะโพกหรือเท้า", ok);
+    setTStatus(ok ? `ยืนนิ่ง ${Math.max(0, CALIB_SEC - el).toFixed(1)} วิ` : "ให้กล้องเห็นตั้งแต่สะโพกถึงปลายเท้าทั้งสองข้าง", ok ? "" : "--bad");
     if (el >= CALIB_SEC) {
-      if (cam.calL.length >= 15) { cam.baseL = median(cam.calL); cam.baseR = median(cam.calR); playTrack(); }
-      else { resetCalibration(); setTStatus("ยังเห็นข้อเท้าไม่ชัด เริ่มยืนนิ่งใหม่", "--bad"); }
+      if (k.finishCalib()) afterCalibration();
+      else { beginCalibration(true); setTStatus("ยังเห็นเท้าไม่ชัด เริ่มยืนนิ่งใหม่", "--bad"); }
     }
     return;
   }
-  if (test.phase !== "intro" && test.phase !== "go") return;
-  const liftL = cam.baseL - sL, liftR = cam.baseR - sR;
-  if (cam.state === "GROUND") {
-    if (liftR > ALT.lift && sR < sL - ALT.diff && liftL < ALT.leftGround) cam.state = "UP";
-  } else if (liftR < ALT.land) {
-    if (now - cam.last >= ALT.gap) { addCount(); cam.last = now; }
-    cam.state = "GROUND";
-  }
+  if (!["intro", "go", "practice"].includes(test.phase)) return;
+  if (k.update(lms, now)) { addCount(); if (cam.rec) cam.rec.hits.push(Math.round(now - cam.rec.t0)); }
+  camInfo(k.state.visible ? "เห็นเท้าทั้งสองข้าง" : "มองไม่เห็นเท้า", k.state.visible);
 }
 function drawFrame(res) {
   ctx2d.save();
   ctx2d.clearRect(0, 0, canvas.width, canvas.height);
-  ctx2d.translate(canvas.width, 0); ctx2d.scale(-1, 1);
+  if (cam.facing === "user") { ctx2d.translate(canvas.width, 0); ctx2d.scale(-1, 1); }   // กล้องหน้าแสดงแบบกระจก
   ctx2d.drawImage(video, 0, 0, canvas.width, canvas.height);
   if (res.landmarks.length) {
     const lm = res.landmarks[0];
     cam.draw.drawConnectors(lm, cam.mp.PoseLandmarker.POSE_CONNECTIONS, { color: "#4da3ff", lineWidth: 3 });
     cam.draw.drawLandmarks(lm, { color: "#ffffff", fillColor: "#1f6fd1", radius: 3 });
-    [[L_ANK, "#22e39a"], [R_ANK, "#ff6b1f"]].forEach(([i, c]) => {
+    [[27, "#22e39a"], [28, "#ff6b1f"]].forEach(([i, c]) => {
       ctx2d.beginPath(); ctx2d.arc(lm[i].x * canvas.width, lm[i].y * canvas.height, 11, 0, Math.PI * 2);
       ctx2d.fillStyle = c; ctx2d.fill(); ctx2d.lineWidth = 3; ctx2d.strokeStyle = "#fff"; ctx2d.stroke();
     });
   }
   ctx2d.restore();
 }
+/* ประมวลผลภาพละ 1 ครั้งตามเฟรมของกล้อง (ไม่ประมวลผลภาพเดิมซ้ำ) */
 function loop() {
-  if (!cam.on) return;
-  if (video.readyState >= 2) {
-    const now = performance.now();
-    cam.landmarker.detectForVideo(video, now, (res) => {
-      drawFrame(res);
-      if (res.landmarks.length) processFeet(res.landmarks[0], now);
-      else if (test.phase === "calib") setTStatus("ไม่พบคนในภาพ ยืนให้เห็นเต็มตัว", "--bad");
+  const onFrame = (now) => {
+    if (!cam.on) return;
+    if (video.readyState >= 2) {
+      const ts = Math.max(now, cam.lastTs + 1); cam.lastTs = ts;
+      cam.times.push(ts); if (cam.times.length > 30) cam.times.shift();
+      try {
+        cam.landmarker.detectForVideo(video, ts, (res) => { drawFrame(res); processPose(res, ts); });
+      } catch (err) { console.warn(err); }
+    }
+    next();
+  };
+  const next = () => {
+    if (!cam.on) return;
+    if (video.requestVideoFrameCallback) cam.vfc = video.requestVideoFrameCallback((now) => onFrame(now));
+    else cam.raf = requestAnimationFrame(() => {
+      if (video.currentTime !== cam.lastVT) { cam.lastVT = video.currentTime; onFrame(performance.now()); } else next();
     });
-  }
-  cam.raf = requestAnimationFrame(loop);
+  };
+  next();
 }
 
 /* =========================================================
